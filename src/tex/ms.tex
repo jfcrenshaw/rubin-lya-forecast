@@ -2,56 +2,146 @@
 \documentclass[twocolumn]{aastex631}
 \usepackage{showyourwork}
 
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xspace}
+\usepackage{mathtools}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}%
+
+% Swap the definition of \abs* and \norm*, so that \abs
+% and \norm resizes the size of the brackets, and the 
+% starred version does not.
+\makeatletter
+\let\oldabs\abs
+\def\abs{\@ifstar{\oldabs}{\oldabs*}}
+%
+\let\oldnorm\norm
+\def\norm{\@ifstar{\oldnorm}{\oldnorm*}}
+\makeatother
+
+\newcommand{\comment}[1]{}
+
+% note command for inline notes
+\newcommand{\note}[1]{\textsf{\textcolor{red}{#1}}}
+% command to note a missing citation
+\newcommand{\needscite}{\note{[needs citation]}}
+
+\newcommand{\lya}{Lyman-$\alpha$\xspace}
+\newcommand{\du}{\Delta u}
+\newcommand{\uh}{\hat{u}}
+\newcommand{\mh}{\hat{m}}
+\newcommand{\HI}{\text{HI}}
+\newcommand{\overbar}[1]{\mkern 5mu\overline{\mkern-5mu#1\mkern-5mu}\mkern 5mu}
+
+
+
+\shorttitle{Modeling Galaxy Catalogues with Normalizing Flows}
+\shortauthors{Crenshaw et al.}
+
+
 % Begin!
 \begin{document}
 
-% Title
-\title{An open source scientific article}
+\title{Feasibility of Detecting a Photometric Lyman-alpha Signal with the Vera Rubin Observatory}
 
-% Author list
-\author{@jfcrenshaw}
+\correspondingauthor{John Franklin Crenshaw}
+\email{jfc20@uw.edu}
+
+\author[0000-0002-2495-3514]{John Franklin Crenshaw}
+\affiliation{DIRAC Institute and Department of Physics, University of Washington, Seattle, WA 98195, USA}
+
+\author{Anze Slosar} % Orcid?
+\affiliation{}
+
+\author{Alex Malz} % Orcid?
+\affiliation{}
+
+\author{Marilena Loverde} % Orcid?
+\affiliation{}
+
+\author{Sam Schmidt} % Orcid?
+\affiliation{}
+
+\author{Melissa Graham} % Orcid?
+\affiliation{}
+
+\author{Eric Gawiser} % Orcid?
+\affiliation{}
+
+\author{Jeff Newman} % Orcid?
+\affiliation{}
+
+\author{Daniel Gruen} % Orcid?
+\affiliation{}
+
+\author{Andrew Connolly} % Orcid?
+\affiliation{}
+
+\collaboration{100}{(Dark Energy Science Collaboration)}
 
 % Abstract with filler text
 \begin{abstract}
-    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. 
-    Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. 
-    Curabitur dictum gravida mauris, consectetuer id, vulputate a, magna. 
-    Donec vehicula augue eu neque, morbi tristique senectus et netus et. 
-    Mauris ut leo, cras viverra metus rhoncus sem, nulla et lectus vestibulum. 
-    Phasellus eu tellus sit amet tortor gravida placerat. 
-    Integer sapien est, iaculis in, pretium quis, viverra ac, nunc. 
-    Praesent eget sem vel leo ultrices bibendum. 
-    Aenean faucibus, morbi dolor nulla, malesuada eu, pulvinar at, mollis ac. 
-    Curabitur auctor semper nulla donec varius orci eget risus. 
-    Duis nibh mi, congue eu, accumsan eleifend, sagittis quis, diam. 
-    Duis eget orci sit amet orci dignissim rutrum.
+    The scattering of light by the \lya transition of neutral hydrogen in the intergalactic medium produces the so-called ``\lya Forest'', visible in the observed spectra of distant quasars.
+    This same effect should decrease the flux of distant sources observed by the Vera Rubin Observatory.
+    Considering only statistical errors and cosmic variance, we assess the feasibility of detecting this signal with Rubin photometry via a decrease in $u$ band flux for sources at redshift $> 2.36$.
+    We estimate a signal-to-noise ratio (SNR) of NN for the mean \lya absorption, NN for the \lya autocorrelation, NN for the galaxy clustering cross-correlation, NN for the lensing cross-correlation, and NN for the dust cross-correlation.
+    We estimate that including infrared photometry from the Euclid and Roman space telescopes will increase SNR by a factor of NN.
+    Given the high SNR estimated here, we expect this signal to be systematics limited, and discuss the modeling that must be performed to enable a robust detection with Rubin data.
+    We also discuss how this photometric \lya probe is complementary to spectroscopic \lya probes and the standard Rubin 3x2pt cosmology analysis.
 \end{abstract}
 
 % Main body with filler text
 \section{Introduction}
 \label{sec:intro}
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. 
-Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. 
-Curabitur dictum gravida mauris, consectetuer id, vulputate a, magna. 
-Donec vehicula augue eu neque, morbi tristique senectus et netus et. 
-Mauris ut leo, cras viverra metus rhoncus sem, nulla et lectus vestibulum. 
-Phasellus eu tellus sit amet tortor gravida placerat. 
-Integer sapien est, iaculis in, pretium quis, viverra ac, nunc. 
-Praesent eget sem vel leo ultrices bibendum. 
-Aenean faucibus, morbi dolor nulla, malesuada eu, pulvinar at, mollis ac. 
-Curabitur auctor semper nulla donec varius orci eget risus. 
-Duis nibh mi, congue eu, accumsan eleifend, sagittis quis, diam. 
-Duis eget orci sit amet orci dignissim rutrum.
+\note{Write the intro!}
 
-Nam dui ligula, fringilla a, euismod sodales, sollici- tudin vel, wisi. 
-Morbi auctor lorem non justo, nam lacus libero, pretium at, lobortis vitae. 
-Donec aliquet, tortor sed accumsan bibendum, erat ligula aliquet magna. 
-Morbi ac orci et nisl hendrerit mollis, suspendisse ut massa, cras nec ante. 
-Pellentesque a nulla cum sociis natoque penatibus et magnis dis parturient. 
-Aliquam tincidunt urna, nulla ullamcorper vestibulum turpis. 
-Pellentesque cursus luctus mauris \citep{Luger2021}.
+\section{The photometric Lyman-alpha signal}
 
-\bibliography{bib}
+\label{sec:signal}
+
+Assume that a distant galaxy has an intrinsic SED $f_0(\lambda)$ in the rest frame of the observer.
+\lya scattering in the IGM modifies the SED, resulting in the observed SED $f(\lambda) = F(\lambda) f_0(\lambda)$, where $F(\lambda)$ is the transmission of the \lya Forest.
+Note that $F(\lambda)$ traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line-of-sight.
+
+Photometric surveys do not observe the SED directly, but rather the flux of the SED integrated over a bandpass:
+\begin{align}
+    f = \int d\lambda \, R(\lambda) F(\lambda) f_0(\lambda),
+\end{align}
+where $R(\lambda)$ is the response function of the photometric band.
+We can define the \emph{photometric transmission}:
+\begin{align}
+    F = \frac{f}{f_0} = \int d\lambda \, R(\lambda) F(\lambda) s(\lambda),
+\end{align}
+where $s(\lambda)$ is the shape of the SED, defined
+\begin{align}
+    s(\lambda) = \frac{f_0(\lambda)}{f_0} = \frac{f_0(\lambda)}{\int d\lambda \, R(\lambda) f_0(\lambda)}.
+\end{align}
+
+The rest frame wavelength of the \lya transition is $\lambda_\alpha = 1216$\AA, and the Rubin $u$ band has support over the wavelengths $3198 < \lambda < 4086$.
+This means that galaxies at $z > 1.63$ will appear dimmer than expected in the $u$ band because some of this light will be scattered by neutral hydrogen along the line-of-sight. 
+This effect will be greatest for galaxies at $z > 2.36$ whose entire $u$ band will be impacted by this scattering.
+Higher redshift galaxies will appear dimmer in longer wavelength bands as well.
+
+With a few assumptions, we can estimate the impact  of \lya scattering on LSST $u$ band observations of galaxies at redshifts $z > 2.36$.
+We will assume a fiducial SED shape $\bar{s}(\lambda) = 1$ over the support of the $u$ band.
+The expected transmission can be calculated from the effective optical depth of the \lya Forest reported by [https://arxiv.org/pdf/1904.01110.pdf]:
+\begin{align}
+    \tau_\text{eff} = \tau_0 (1 + z)^\gamma,
+\end{align}
+where $\tau_\text{eff} = (5.54 \pm 0.64) \times 10^{-3}$ and $\gamma = 3.182 \pm 0.074$.
+With these choices, we can calculate the expected size of the photometric signal in LSST:
+\begin{align}
+    \bar{F} = \int d\lambda \, R(\lambda) \bar{F}(\lambda) \bar{s}(\lambda) = ...
+\end{align}
+This translates to an expected $u$ band decrement $\overbar{\du} = -2.5 \log_{10} \bar{F} = ...$.
+In other words, galaxies at $z > 2.36$ will, on average, appear $...$ magnitudes dimmer in the $u$ band than would otherwise be expected in the absence of the \lya Forest.
+
+The question is whether this decrease in flux can be detected with the Rubin observatory and what cosmological signal can be extracted from it.
+In Section \ref{sec:snr}, we simulate observations and the inference pipeline to calibrate the expected SNR of the signal on a per-galaxy basis.
+In Section \ref{sec:correlations}, we calculate auto- and cross-correlations of the photometric \lya signal to determine the expected SNR of the signal in a cosmological analysis.
+
 
 \end{document}

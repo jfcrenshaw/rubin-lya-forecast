@@ -153,12 +153,13 @@ For an estimate of the SNR on measurements of the \lya variations due to large s
 \subsection{The simulated catalog}
 
 We use the simulated galaxy catalog of [Cite both of Melissa's papers] \needscite, which is based on the Millennium simulation \needscite.
-This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry ($ugrizy$) and near-infrared (NIR) photometry from Euclid ($YJH$) and the Roman Space Telescope ($YJHF$).
+This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry and near-infrared (NIR) photometry from Euclid and the Roman Space Telescope.
 This constitutes the truth catalog.
 
-Throughout the rest of this paper, we will denote true galaxy redshifts with the variable $z$\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.}, true $u$ band magnitudes with $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
+Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, true LSST $u$ band magnitudes with $u$, and LSST $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
 We will use the variable $m$ to refer to the vector of all other magnitudes.
-$m$ always includes the LSST $grizy$ bands, and, depending on the context, might include either the Euclid or Roman bands \note{Note: change this language if I determine that Euclid and Roman will have overlap}.
+For most of the paper, $m$ refers only to the LSST $grizy$ bands.
+In Section \ref{sec:nir}, we consider the inclusion of Euclid $YJH$ and Roman $YJHF$ bands.
 
 To simulate an observed catalog, we add $u$ band decrements to galaxies at redshifts $z > 1.63$ to account for the \lya scattering of the $u$ band flux.
 We calculate these decrements by integrating the mean \lya transmission up to the wavelength of the $u$ band filter that is impacted by the \lya transmission:
@@ -223,11 +224,12 @@ from the flow ensemble, and calculating the fraction of $\{ z^{(i, j)} \}$ sampl
 \subsection{Inference on $\du$}
 
 Now that we have a sample of galaxies at redshift > 2.36, we can perform inference on the $u$ band decrement $\Delta u$.
+This amounts to using the observed $grizy$ magnitudes to predict $u$, and comparing this predicted value to the observed value, $\hat{u}_\alpha$.
+
 The likelihood for the decrement of each galaxy can be calculated:
 \begin{align}
     \mathcal{L}(\du) = \int du \, p(\hat{u}_\alpha | u, \du) \, p(u | \hat{m}, z > 2.36).
 \end{align}
-
 This integral can be efficiently computed via reusing the samples from Equation \ref{eq:samples}.
 For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)} < 2.36$, generating a set of samples 
 \begin{align}
@@ -320,7 +322,6 @@ In order to perform this cross-correlation, we must photometrically select a sam
 This selection can be performed in an identical manner to the photo-z selection in Section \ref{sec:photo-z} by replacing the limits on the integral in Equation \ref{eq:redshift-cut}:
 \begin{align}
     \int_{1.63}^{2.36} dz ~ p(z|\hat{m}, \sigma_m) > 0.95.
-    \label{eq:redshift-cut}
 \end{align}
 Again, this cut yields a high-purity but low-completeness sample.
 The purity, completeness, and projected size of the foreground sample can be seen as a function of LSST survey duration in Figure \note{N}.
@@ -330,7 +331,7 @@ The tracer for the foreground galaxies can be written:
     \delta_g(\textbf{k}) = b_g (1 + \mu_\textbf{k}^2 \beta_g) \delta_b(\textbf{k}),
     \label{eq:galaxy-tracer}
 \end{align}
-where $b_g \approx 2$ is the linear galaxy bias \needscite, and $\beta_g = \frac{1}{b_g}$ sets the amplitude of RSDs.
+where $b_g \approx 2$ is the linear galaxy bias and $\beta_g \approx b_g^{-1}$ sets the amplitude of RSDs \needscite.
 There is a corresponding projected galaxy tracer
 \begin{align}
     \Delta_g = \int dz \, W_g(z) \, \delta_g(z),

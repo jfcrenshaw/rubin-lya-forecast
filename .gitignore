@@ -12,3 +12,6 @@ src/tex/figures/*
 
 # Miscellaneous
 __pycache__
+
+# jupyter notebook checkpoints
+**/.ipynb_checkpoints

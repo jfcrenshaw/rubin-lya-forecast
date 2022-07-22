@@ -58,12 +58,15 @@ for year in range(1, 10):
     # build the error model
     lsst_error_model = LSSTErrorModel(nYrObs=year)
 
+    # add LSST errors
+    lsst_catalog = lsst_error_model(restricted_catalog, seed=year)
+
     # apply the SNR cut on the LSST reference band
     mag_cut = lsst_error_model.get_limiting_mags(Nsigma=snr_cut, coadded=True)[ref_band]
-    lsst_catalog = restricted_catalog.query(f"{ref_band} < {mag_cut}")
+    lsst_catalog = lsst_catalog.query(f"{ref_band} < {mag_cut}")
 
-    # add LSST errors
-    lsst_catalog = lsst_error_model(lsst_catalog, seed=year)
+    # cut negative fluxes
+    lsst_catalog = lsst_catalog[np.isfinite(lsst_catalog).all(axis=1)]
 
     # save the catalog
     lsst_catalog.to_pickle(catalog_dir / f"lsstY{year}.pkl")

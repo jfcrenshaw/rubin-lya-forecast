@@ -62,8 +62,8 @@ class LSSTErrorModel:
         "airmass": 1.2,  # fiducial airmass (T2)
         "extendedSource": 0.0,  # constant added to m5 for extended sources
         "sigmaSys": 0.005,  # expected irreducible error, p26
-        "magLim": 30.0,  # dimmest allowed magnitude; dimmer mags set to ndFlag
-        "ndFlag": np.nan,  # flag for non-detections (all mags > magLim)
+        "magLim": np.inf,  # dimmest allowed magnitude; dimmer mags set to ndFlag
+        "ndFlag": np.inf,  # flag for non-detections (all mags > magLim)
         "m5": {},  # explicit list of m5 limiting magnitudes
         "Cm": {  # band dependent parameter (T2)
             "u": 23.09,

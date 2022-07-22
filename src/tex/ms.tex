@@ -7,8 +7,8 @@
 \usepackage{xspace}
 \usepackage{mathtools}
 
-\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
-\DeclarePairedDelimiter\norm{\lVert}{\rVert}%
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
 
 % Swap the definition of \abs* and \norm*, so that \abs
 % and \norm resizes the size of the brackets, and the 
@@ -30,9 +30,6 @@
 
 \newcommand{\lya}{Lyman-$\alpha$\xspace}
 \newcommand{\du}{\Delta u}
-\newcommand{\uh}{\hat{u}}
-\newcommand{\mh}{\hat{m}}
-\newcommand{\HI}{\text{HI}}
 \newcommand{\overbar}[1]{\mkern 5mu\overline{\mkern-5mu#1\mkern-5mu}\mkern 5mu}
 
 
@@ -114,6 +111,7 @@ where $R(\lambda)$ is the response function of the photometric band.
 We can define the \emph{photometric transmission}:
 \begin{align}
     F = \frac{f}{f_0} = \int d\lambda \, R(\lambda) F(\lambda) s(\lambda),
+    \label{eq:F}
 \end{align}
 where $s(\lambda)$ is the shape of the SED, defined
 \begin{align}
@@ -127,14 +125,15 @@ Higher redshift galaxies will appear dimmer in longer wavelength bands as well.
 
 With a few assumptions, we can estimate the impact  of \lya scattering on LSST $u$ band observations of galaxies at redshifts $z > 2.36$.
 We will assume a fiducial SED shape $\bar{s}(\lambda) = 1$ over the support of the $u$ band.
-The expected transmission can be calculated from the effective optical depth of the \lya Forest reported by [https://arxiv.org/pdf/1904.01110.pdf]:
+The expected transmission can be calculated from the effective optical depth of the \lya Forest reported by [https://arxiv.org/pdf/1904.01110.pdf]: $\bar{F}(\lambda) = e^{-\tau_\text{eff}(\lambda)}$, where
 \begin{align}
     \tau_\text{eff} = \tau_0 (1 + z)^\gamma,
 \end{align}
-where $\tau_\text{eff} = (5.54 \pm 0.64) \times 10^{-3}$ and $\gamma = 3.182 \pm 0.074$.
+$\tau_\text{eff} = (5.54 \pm 0.64) \times 10^{-3}$ and $\gamma = 3.182 \pm 0.074$.
 With these choices, we can calculate the expected size of the photometric signal in LSST:
 \begin{align}
     \bar{F} = \int d\lambda \, R(\lambda) \bar{F}(\lambda) \bar{s}(\lambda) = ...
+    \label{eq:Fbar}
 \end{align}
 This translates to an expected $u$ band decrement $\overbar{\du} = -2.5 \log_{10} \bar{F} = ...$.
 In other words, galaxies at $z > 2.36$ will, on average, appear $...$ magnitudes dimmer in the $u$ band than would otherwise be expected in the absence of the \lya Forest.
@@ -142,6 +141,230 @@ In other words, galaxies at $z > 2.36$ will, on average, appear $...$ magnitudes
 The question is whether this decrease in flux can be detected with the Rubin observatory and what cosmological signal can be extracted from it.
 In Section \ref{sec:snr}, we simulate observations and the inference pipeline to calibrate the expected SNR of the signal on a per-galaxy basis.
 In Section \ref{sec:correlations}, we calculate auto- and cross-correlations of the photometric \lya signal to determine the expected SNR of the signal in a cosmological analysis.
+
+
+\section{Estimating signal-to-noise}
+\label{sec:snr}
+
+In this section, we simulate Rubin observations to calibrate the expected SNR of the photometric \lya signal on a per-galaxy basis.
+We will not simulate variations in the \lya signal due to large scale structure, because these variations are greatly subdominant to the uncertainties in estimating $\du$, and will therefore not impact our signal-to-noise estimate in this section.
+For an estimate of the SNR on measurements of the \lya variations due to large scale structure, see Section \ref{sec:correlations}
+
+\subsection{The simulated catalog}
+
+We use the simulated galaxy catalog of [Cite both of Melissa's papers] \needscite, which is based on the Millennium simulation \needscite.
+This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry ($ugrizy$) and near-infrared (NIR) photometry from Euclid ($YJH$) and the Roman Space Telescope ($YJHF$).
+This constitutes the truth catalog.
+
+Throughout the rest of this paper, we will denote true galaxy redshifts with the variable $z$\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.}, true $u$ band magnitudes with $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
+We will use the variable $m$ to refer to the vector of all other magnitudes.
+$m$ always includes the LSST $grizy$ bands, and, depending on the context, might include either the Euclid or Roman bands \note{Note: change this language if I determine that Euclid and Roman will have overlap}.
+
+To simulate an observed catalog, we add $u$ band decrements to galaxies at redshifts $z > 1.63$ to account for the \lya scattering of the $u$ band flux.
+We calculate these decrements by integrating the mean \lya transmission up to the wavelength of the $u$ band filter that is impacted by the \lya transmission:
+\begin{align}
+    \du = -2.5 \log_{10} \left[ \, 
+    \int_0^{\lambda_z} d\lambda \, R(\lambda) \bar{F}(\lambda)
+    \, \right],
+\end{align}
+where $\lambda_z = \min(\lambda_\alpha (1 + z), 2.36)$.
+
+We then simulate photometric errors according to the \needscite error model, including the low SNR generalization presented in \needscite and the extension to Euclid and Roman presented in \needscite.
+We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}$, and their photometric errors with the variables $\sigma_u$, $\sigma_m$.
+Finally, we apply a cut of SNR > 5 in the $i$ band.
+
+\note{
+    At some point I want to add plots showing how different assumptions of $\bar{s}$ change the mean $\du$.
+    Make a plot $\du(z)$ for several different powerlaws for $\bar{s}$.
+}
+
+\subsection{Selecting the high-redshift sample}
+\label{sec:photo-z}
+
+We train an ensemble of normalizing flows to model the conditional distribution $p(z, u | m)$ \needscite.
+Note this ensemble is trained on the truth catalog, imagining a galaxy simulation that matches reality.
+\note{
+    I need to actually write this section.
+    I can probably refer the ensemble setup to that described in my pzflow paper.
+}
+
+Once we have trained the model, we create a high-redshift sample whose $u$ band magnitudes are maximally impacted by \lya scattering via applying the photometric redshift cut
+\begin{align}
+    \int_{2.36}^\infty dz ~ p(z|\hat{m}, \sigma_m) > 0.95.
+    \label{eq:redshift-cut}
+\end{align}
+That is, we select those galaxies whose redshift posteriors indicate a 95\% probability of being above redshift 2.36.
+We can efficiently compute the integral in Equation \ref{eq:redshift-cut} by sampling
+\begin{align}
+    _{i=1}^{~~ M} \{ m^i \, | \, m^i \sim p(m | \hat{m}, \sigma_m) \},
+\end{align}
+from the photometric error model for each galaxy (which is just a Gaussian in flux space), followed by sampling
+\begin{align}
+    _{j=1}^{~~ N} \{ z^{(i,\, j)}, u^{(i,\, j)} \, | \, z^{(i,\, j)}, u^{(i,\, j)} \sim p(z, u | m^i) \},
+    \label{eq:samples}
+\end{align}
+from the flow ensemble, and calculating the fraction of $\{ z^{(i, j)} \}$ samples that are above 2.36.
+
+\note{
+    State the values I use for $M, N$.
+    Maybe also leave $p_\text{cut}$ general, and state my choice when I state $M, N$?
+}
+
+\note{
+    Discuss the completeness and purity of the redshift sample.
+    Discuss its growth as a function of survey time.
+    Discuss how the probability cut was selected to favor purity, and show the plot of the tradeoff between purity and completeness.
+}
+
+\note{
+    Project the size of the sample for LSST.
+}
+
+\subsection{Inference on $\du$}
+
+Now that we have a sample of galaxies at redshift > 2.36, we can perform inference on the $u$ band decrement $\Delta u$.
+The likelihood for the decrement of each galaxy can be calculated:
+\begin{align}
+    \mathcal{L}(\du) = \int du \, p(\hat{u}_\alpha | u, \du) \, p(u | \hat{m}, z > 2.36).
+\end{align}
+
+This integral can be efficiently computed via reusing the samples from Equation \ref{eq:samples}.
+For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)} < 2.36$, generating a set of samples 
+\begin{align}
+    {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ u^{(i,\, j)} | z^{(i,\, j)} > 2.36\}
+\end{align}
+for each galaxy.
+We can then directly calculate $p(\hat{u}_\alpha | u, \du) = p(\hat{u}_\alpha | u_\alpha = u + \du)$ using the photometric error model.
+Averaging over the samples $\{ u^{(i,\, j)} \}$ yields the likelihood $\mathcal{L}(\du)$.
+
+You can see likelihoods for three example galaxies in Figure \note{N}.
+\note{
+    Note how they are non-Gaussian, and try to include one that has a large tail due to low signal to noise.
+    Note that the likelihoods span to negative decrements - so you can't even tell if the galaxy actually did get dimmer - it may be brighter!
+}
+
+\note{
+    When combining many likelihoods, the variance scales like $\bar{\sigma}_{\small \du} / N$, where $\bar{\sigma}_{\small \du}$ is the effective Gaussian error per galaxy.
+    Note that the effective SNR for a single galaxy is $\sim 1$.
+    This isn't great SNR, but in the next section we will calculate correlation functions that have much greater SNRs.
+}
+
+
+\section{Auto- and cross-correlations of the Lyman-alpha signal}
+
+The \lya Forest traces neutral hydrogen gas in the universe, which in turn traces the large scale structure of the universe.
+We can calculate correlations of the \lya signal with itself and other tracers of the large scale structure to learn about the clustering and behavior of the different components of the universe.
+This also allows us to combine information from many galaxies and boost the relatively modest SNR of the photometric \lya signal for a single galaxy, as well as test for systematic errors that may plague our analysis.
+I will first develop the formalism of the photometric \lya tracer, before calculating auto- and cross-correlations in the following subsections.
+
+\lya correlation functions are usually computed in terms of the transmission $F(\lambda)$, which traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line-of-sight.
+For the rest of this section, we will work in terms of redshift $z$ instead of wavelength $\lambda$. 
+This requires us to make the replacement $d\lambda \to \lambda_\alpha dz$ in our integrals, where $\lambda_\alpha$ is the wavelength of the \lya transition.
+
+We can write the transmission in terms of fluctuations about the mean: $F(z) = \bar{F}(z) [1 + \delta_F(z)]$.
+Similarly, we can express the shape of each galaxy's continuum SED over the $u$ band in terms of fluctuations about the mean SED: $s(z) = \bar{s(z)}[1 + \delta_s(z)]$.
+Note that the mean $\bar{F}$ is an average over lines-of-sight, while the mean $\bar{s}(z)$ is an average over galaxies in the sample.
+
+Using Equations \ref{eq:F} and \ref{eq:Fbar}, we can calculate fractional variations in the \lya transmission $F$:
+\begin{align}
+    \Delta_F = \frac{F - \bar{F}}{\bar{F}} = \int dz \, W_F(z)[\delta_F(z) + \delta_s(z)],
+\end{align}
+where $W_F(z) \propto R(z) \bar{F}(z) \bar{s}(z)$ is a normalized redshift kernel for the photometric \lya signal.
+$\delta_F$ represents the \lya signal, while $\delta_s$ represents noise from galaxy-to-galaxy variations of the continuum SED.
+The noise $\delta_s$ should not correlate with the signal \note{[?]}, and we will assume that the continuum SED can be estimated well enough that this term will be subdominant.
+Thus, we have the tracer
+\begin{align}
+    \Delta_F = \int dz \, W_F(z) \delta_F(z).
+    \label{eq:lya-tracer}
+\end{align}
+
+Equation \ref{eq:lya-tracer} is the photometric \lya tracer.
+We see that it is a projection of variations in the \lya transmission field, $\delta_F(z)$, weighted by the kernel $W_F(z)$.
+In Fourier space, 
+\begin{align}
+    \delta_F(\textbf{k}) = b_F (1 + \mu_\textbf{k}^2 \beta_F) \delta_b(\textbf{k}),
+    \label{eq:fourier-tracer}
+\end{align}
+where $b_F \approx -0.13$ is the linear bias of the \lya field, $\beta_F \approx 1.5$ measures the strength of redshift-space distortions (RSD)\footnote{Unlike the galaxy tracer (c.f. Equation \ref{eq:galaxy-tracer}), $\beta$ is another free parameter. \note{This has to do with the nonlinear transformation applied to the optical depth? I need to work on understanding this.}}, $\mu_\textbf{k}$ is the cosine between the mode $\textbf{k}$ and the line-of-sight, and $\delta_b(\textbf{k})$ are the Fourier space fluctuations of the baryon density field \needscite.
+Note that the bias is negative as more neutral hydrogen corresponds to less transmitted flux.
+
+The bias and RSD make this tracer look like the projected galaxy density tracer (c.f. Equation \ref{eq:galaxy-tracer}), but similar to gravitational lensing tracers (c.f. Section \note{N}), it is sensitive to density integrated over the lines-of-sight to background sources.
+The integral in Equation \ref{eq:lya-tracer} means the photometric tracer is relatively insensitive to the RSD term in Equation \ref{eq:fourier-tracer}.
+This is because the RSD term only contributes to modes along the line-of-sight (due to the cosine $\mu_\textbf{k}$).
+Modes with wavelength less than the width of the redshift kernel will cancel each other in the integral, and modes longer than the width of the redshift kernel will be indistinguishable from \note{$\bar{F}$ or something to do with $s$?}.
+\note{
+    I should test if the correlations are relatively independent of $\beta$!
+    I should really have Anze confirm this part.    
+}
+
+In the subsections that follow, I calculate different correlations of the photometric \lya signal and forecast the SNR of these measurements as a function of LSST survey duration.
+In every case, correlation functions are calculated using CCL \needscite assuming the Planck cosmology \needscite.
+The SNR calculations involve the expected per-galaxy uncertainty on the photometric \lya transmission, $\bar{\sigma}_{\Delta_F}$, which can be calculated from the expected per-galaxy uncertainty on the $u$ band decrement, $\bar{\sigma}_{\small \du}$:
+\begin{align}
+    \bar{\sigma}_{\Delta_F} = \frac{\ln 10}{2.5} \bar{\sigma}_{\small \du} \approx ... 
+\end{align}
+\note{Say something about the logarithmic binning of tracers that applies to every subsection.}
+
+\subsection{Lyman-alpha autocorrelation}
+
+\note{
+    Write this after I actually perform the calculation. 
+    Explain the counting of pairs.
+    Don't forget to add the factor of 1/2 to account for double counting.
+}
+
+\subsection{Correlation with galaxy clustering}
+
+We can correlate the photometric \lya signal with foreground galaxies that lie within the same redshift range as the HI clouds responsible for the \lya scattering of the $u$ band flux.
+In order to perform this cross-correlation, we must photometrically select a sample of foreground tracer galaxies.
+This selection can be performed in an identical manner to the photo-z selection in Section \ref{sec:photo-z} by replacing the limits on the integral in Equation \ref{eq:redshift-cut}:
+\begin{align}
+    \int_{1.63}^{2.36} dz ~ p(z|\hat{m}, \sigma_m) > 0.95.
+    \label{eq:redshift-cut}
+\end{align}
+Again, this cut yields a high-purity but low-completeness sample.
+The purity, completeness, and projected size of the foreground sample can be seen as a function of LSST survey duration in Figure \note{N}.
+
+The tracer for the foreground galaxies can be written:
+\begin{align}
+    \delta_g(\textbf{k}) = b_g (1 + \mu_\textbf{k}^2 \beta_g) \delta_b(\textbf{k}),
+    \label{eq:galaxy-tracer}
+\end{align}
+where $b_g \approx 2$ is the linear galaxy bias \needscite, and $\beta_g = \frac{1}{b_g}$ sets the amplitude of RSDs.
+There is a corresponding projected galaxy tracer
+\begin{align}
+    \Delta_g = \int dz \, W_g(z) \, \delta_g(z),
+\end{align}
+where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample\footnote{This distribution is typically written as $n(z)$, but I write it as $W_g(z)$ here to unify the notation with the redshift kernels of the other tracers considered in this section.}
+
+\note{Plot the correlations.}
+
+\note{Give the pair counting that yields the SNR estimate.}
+
+
+\subsection{Correlation with lensing magnification}
+
+\note{
+    Need to ask Marilena/Anze about whether I should use the lensing magnification signal in the number density or in the magnitude increase.
+    If doing the latter, I should use $i$ band, as this will be the highest SNR band in my catalog.
+}
+
+\subsection{Correlation with dust}
+
+\note{
+    Can calculate correlation with galaxy colors as a proxy for dust.
+    Anze thinks this will be interesting to CMB people.
+}
+
+\note{
+    Look at Marilena's notes in the email she sent me.
+    Eric Gawiser might be a good person to ask.
+    Or even Daniel Gruen?
+}
+
+
+\section{Impact of near-infrared photometry}
+
 
 
 \end{document}

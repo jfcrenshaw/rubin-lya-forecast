@@ -1,5 +1,4 @@
 """Photometric Error Models from RAIL - the old functional version."""
-from numbers import Number
 from typing import Iterable, List, Optional, Tuple
 
 import numpy as np

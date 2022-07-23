@@ -1,9 +1,4 @@
 <p align="center">
-<a href="https://github.com/showyourwork/showyourwork">
-<img width = "450" src="https://raw.githubusercontent.com/showyourwork/.github/main/images/showyourwork.png" alt="showyourwork"/>
-</a>
-<br>
-<br>
 <a href="https://github.com/jfcrenshaw/rubin-lya-forecast/actions/workflows/build.yml">
 <img src="https://github.com/jfcrenshaw/rubin-lya-forecast/actions/workflows/build.yml/badge.svg?branch=main" alt="Article status"/>
 </a>
@@ -15,4 +10,10 @@
 </a>
 </p>
 
-An open source scientific article created using the [showyourwork](https://github.com/showyourwork/showyourwork) workflow.
+Paper forecasting the SNR for a photometric Lyman-alpha signal detected with the Vera Rubin Observatory.
+
+To Do:
+
+- Fix the observed catalogs so they contain Lya extinction
+- Save a version of the truth catalog that includes the impacts of Lya extinction on m.
+- Finish reworking the notation in the manuscript

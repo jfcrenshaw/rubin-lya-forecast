@@ -1,0 +1,55 @@
+"""Plot the Lyman-alpha band decrements."""
+import matplotlib.pyplot as plt
+import numpy as np
+from showyourwork.paths import user as Paths
+from utils import lya_decrement
+
+# instantiate the paths
+paths = Paths()
+
+# create the figure
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 2.7), constrained_layout=True)
+
+# plot the u band decrements as a function of spectral index
+zs = np.linspace(1.6, 2.4, 1000)
+ax1.plot(
+    zs,
+    lya_decrement(zs, "u", -2),
+    label="$\\bar{s}(\lambda) \propto \lambda^{-2}$",
+    c="C0",
+    ls="--",
+)
+ax1.plot(
+    zs,
+    lya_decrement(zs, "u", 0),
+    label="$\\bar{s}(\lambda) \propto \lambda^{0}$",
+    c="C0",
+    ls="-",
+)
+ax1.plot(
+    zs,
+    lya_decrement(zs, "u", 2),
+    label="$\\bar{s}(\lambda) \propto \lambda^{2}$",
+    c="C0",
+    ls=":",
+)
+ax1.legend(title="$\Delta u$", handlelength=1)
+ax1.set(
+    xlabel="redshift",
+    ylabel="mags",
+    xlim=(zs.min(), zs.max()),
+)
+
+# plot the u band decrements for the 3 relevant bands
+zs = np.linspace(1.5, 5, 1000)
+ax2.plot(zs, lya_decrement(zs, "u"), label="$\Delta u$")
+ax2.plot(zs, lya_decrement(zs, "g"), label="$\Delta g$")
+ax2.plot(zs, lya_decrement(zs, "r"), label="$\Delta r$")
+ax2.legend()
+ax2.set(
+    xlabel="redshift",
+    ylabel="mags",
+    xlim=(zs.min(), zs.max()),
+)
+
+fig.savefig(paths.figures / "decrements.pdf")

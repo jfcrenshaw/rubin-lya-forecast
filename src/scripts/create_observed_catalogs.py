@@ -2,9 +2,12 @@
 from pathlib import Path
 
 import numpy as np
-import paths
-from error_models import EuclidErrorModel, LSSTErrorModel, RomanErrorModel
-from load_truth_catalog import load_truth_catalog
+from showyourwork.paths import user as Paths
+from utils import load_truth_catalog
+from utils.error_models import EuclidErrorModel, LSSTErrorModel, RomanErrorModel
+
+# instantiate the paths
+paths = Paths()
 
 # load the truth catalog
 truth_catalog = load_truth_catalog()
@@ -44,7 +47,7 @@ euclid_catalog = euclid_catalog[mask]
 roman_catalog = roman_catalog[mask]
 
 # create the directory where the catalogs will be saved
-catalog_dir = paths.data / "observed_catalogs"
+catalog_dir = paths.data / "processed_catalogs"
 Path.mkdir(catalog_dir, exist_ok=True)
 
 # save these maximal catalogs

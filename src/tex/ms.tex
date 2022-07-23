@@ -206,11 +206,23 @@ We use the simulated galaxy catalog of [Cite both of Melissa's papers] \needscit
 This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry and near-infrared (NIR) photometry from Euclid and the Roman Space Telescope.
 This constitutes the truth catalog.
 
-Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, true LSST $u$ band magnitudes with $u$, and LSST $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
-We will use the variable $m$ to refer to the vector of all other magnitudes.
-For most of the paper, $m$ refers only to the LSST $grizy$ bands.
+Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
+We will use the variable $m$ to refer to the vector of all other intrinsic magnitudes, and the variable $m_\alpha$ to refer to their values including \lya extinction.
+For most of the paper, $m$/$m_\alpha$ refer only to the LSST $grizy$ bands.
 In Section \ref{sec:nir}, we consider the inclusion of Euclid $YJH$ and Roman $YJHF$ bands.
 
+\begin{figure*}[t!]
+    \script{plot_decrements.py}
+    \begin{centering}
+        \includegraphics{figures/decrements.pdf}
+        \caption{
+            Need to write this!
+        }
+        \label{fig:decrements}
+    \end{centering}
+\end{figure*}
+
+\note{change this to include all band decrements.}
 To simulate an observed catalog, we add $u$ band decrements to galaxies at redshifts $z > 1.63$ to account for the \lya scattering of the $u$ band flux.
 We calculate these decrements by integrating the mean \lya transmission up to the wavelength of the $u$ band filter that is impacted by the \lya transmission:
 \begin{align}
@@ -218,11 +230,12 @@ We calculate these decrements by integrating the mean \lya transmission up to th
     \int_0^{\lambda_z} d\lambda \, R(\lambda) \bar{F}(\lambda)
     \, \right],
 \end{align}
-where $\lambda_z = \min(\lambda_\alpha (1 + z), 2.36)$.
+where $\lambda_z = \lambda_\alpha (1 + z)$.
 
 We then simulate photometric errors according to the \needscite error model, including the low SNR generalization presented in \needscite and the extension to Euclid and Roman presented in \needscite.
 We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}$, and their photometric errors with the variables $\sigma_u$, $\sigma_m$.
 Finally, we apply a cut of SNR > 5 in the $i$ band.
+\note{the $m$ above needs an $\alpha$ subscript, and I should start making the $\sigma$'s implicit to simplify things.}
 
 \note{
     At some point I want to add plots showing how different assumptions of $\bar{s}$ change the mean $\du$.
@@ -232,6 +245,7 @@ Finally, we apply a cut of SNR > 5 in the $i$ band.
 \subsection{Selecting the high-redshift sample}
 \label{sec:photo-z}
 
+\note{I probably want to swap $m \to m_\alpha$.}
 We train an ensemble of normalizing flows to model the conditional distribution $p(z, u | m)$ \needscite.
 Note this ensemble is trained on the truth catalog, imagining a galaxy simulation that matches reality.
 \note{
@@ -296,7 +310,7 @@ You can see likelihoods for three example galaxies in Figure \note{N}.
 }
 
 \note{
-    When combining many likelihoods, the variance scales like $\bar{\sigma}_{\small \du} / N$, where $\bar{\sigma}_{\small \du}$ is the effective Gaussian error per galaxy.
+    When combining many likelihoods, the variance scales like $\bar{\sigma}_{\small \du}^2 / N$, where $\bar{\sigma}_{\small \du}$ is the effective Gaussian error per galaxy.
     Note that the effective SNR for a single galaxy is $\sim 1$.
     This isn't great SNR, but in the next section we will calculate correlation functions that have much greater SNRs.
 }
@@ -415,6 +429,7 @@ where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample
 
 
 \section{Impact of near-infrared photometry}
+\label{sec:nir}
 
 
 

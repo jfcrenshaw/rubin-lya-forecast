@@ -3,5 +3,5 @@ dependencies:
   src/scripts/load_truth_catalog.py:
     - src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat
   src/scripts/create_observed_catalogs.py:
-    - src/scripts/load_truth_catalog.py
-    - src/scripts/error_models.py
+    - src/scripts/utils/load_truth_catalog.py
+    - src/scripts/utils/error_models.py

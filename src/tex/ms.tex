@@ -205,7 +205,11 @@ For simplicity, we will assume $\bar{s}(\lambda) \propto \lambda ^ \alpha$, and 
     \begin{centering}
         \includegraphics{figures/decrements.pdf}
         \caption{
-            Need to write this!
+            Left: the expected \lya $u$ band decrement assuming mean galaxy spectra $\bar{s}(\lambda) \propto \lambda^\alpha$.
+            A lower value of $\alpha$ corresponds to a bluer mean spectrum.
+            Bluer galaxies have larger magnitude decrements at low redshift, but red galaxies have larger total decrements at high redshift.
+            Right: expected \lya decrements for the three bluest LSST bands.
+            On each curve, the redshift at which the decrement begins to rise (plateau) signifies the redshift at which the \lya transition enters (leaves) the corresponding band.
         }
         \label{fig:decrements}
     \end{centering}
@@ -219,25 +223,13 @@ Overall, the difference between the curves is not substantial.
 For the rest of this paper, we will assume $\alpha=0$.
 
 The right panel of Figure \ref{fig:decrements} shows expected magnitude decrements as a function of redshift for the three bluest LSST bands.
-On each curve, the redshift at which the decrement begins to rise (plateau) signifies the redshift at which the \lya transition enters (leaves) the corresponding band.
-\note{
-    To give a sense for the scale of these decrements, we plot the expected photometric error as a function of redshift for the $u$ and $g$ bands (the errors were calculated using the \citep{ivezic2019} error model, assuming 10 years of observation; see Section \ref{sec:catalog}).
-}
+As you go to higher redshift, more and more of the LSST photometric bands have their flux stolen by the \lya Forest.
+The effect accelerates at higher redshift as the optical depth of the Forest increases with redshift.
 
-To give a sense of the significance of these decrements, we plot the expected photometric error for each band as a function of 
-
-\note{
-    Mention the plot here.
-    The left side shows $u$ band decrements for different values of $alpha$.
-    The results are relatively insensitive to this choice, so for now, we use $\alpha=0$.
-    The right hand side shows the expected decrements for the 3 bluest bands, as a function of redshift.
-    To get an idea of the scale, we plot the expected photometric errors for these bands as a function of redshift (Y1 or Y10?)
-}
-
-The question of this paper is whether this decrease in flux can be detected with the Rubin observatory and what cosmological signal can be extracted from it.
-\note{I need to state the $u$ band focus here.}
-In Section \ref{sec:snr}, we simulate observations and the inference pipeline to calibrate the expected SNR of the signal on a per-galaxy basis.
-In Section \ref{sec:correlations}, we calculate auto- and cross-correlations of the photometric \lya signal to determine the expected SNR of the signal in a cosmological analysis.
+The central question of this paper is whether we can extract cosmological information from these magnitude decrements using photometric observations from the Rubin observatory.
+We will focus on measuring the $u$ band decrement for galaxies at $z > 2.36$, for which $\Delta u \sim 0.205$.
+In Section \ref{sec:snr}, we simulate observations and the inference pipeline to calibrate the expected SNR of $\Delta u$ measurements for individual galaxies.
+Then, in Section \ref{sec:correlations}, we calculate auto- and cross-correlations of the photometric \lya signal to determine the expected SNR of the signal in a cosmology analysis.
 
 
 \section{Calibrating signal-to-noise}

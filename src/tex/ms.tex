@@ -231,7 +231,7 @@ In Section \ref{sec:snr}, we simulate observations and the inference pipeline to
 Then, in Section \ref{sec:correlations}, we calculate auto- and cross-correlations of the photometric \lya signal to determine the expected SNR of the signal in a cosmology analysis.
 
 
-\section{Calibrating signal-to-noise}
+\section{Calibrating the signal-to-noise}
 \label{sec:snr}
 
 In this section, we simulate Rubin observations to calibrate the expected SNR of the photometric \lya signal for individual galaxies.
@@ -241,8 +241,8 @@ For an estimate of the SNR on measurements of \lya variations due to large scale
 \subsection{The simulated catalog}
 \label{sec:catalog}
 
-We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium simulation.
-This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry and near-infrared (NIR) photometry from Euclid and the Roman Space Telescope.
+We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium simulation \needscite.
+This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry and NIR photometry from Euclid and the Roman Space Telescope.
 This constitutes the truth catalog.
 
 Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
@@ -250,25 +250,10 @@ We will use the variable $m$ to refer to the vector of all other intrinsic magni
 For most of the paper, $m$/$m_\alpha$ refer only to the LSST $grizy$ bands.
 In Section \ref{sec:nir}, we consider the inclusion of Euclid $YJH$ and Roman $YJHF$ bands.
 
-\note{change this to include all band decrements.}
-To simulate an observed catalog, we add $u$ band decrements to galaxies at redshifts $z > 1.63$ to account for the \lya scattering of the $u$ band flux.
-We calculate these decrements by integrating the mean \lya transmission up to the wavelength of the $u$ band filter that is impacted by the \lya transmission:
-\begin{align}
-    \du = -2.5 \log_{10} \left[ \, 
-    \int_0^{\lambda_z} d\lambda \, R(\lambda) \bar{F}(\lambda)
-    \, \right],
-\end{align}
-where $\lambda_z = \lambda_\alpha (1 + z)$.
-
-We then simulate photometric errors according to the \needscite error model, including the low SNR generalization presented in \needscite and the extension to Euclid and Roman presented in \needscite.
-We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}$, and their photometric errors with the variables $\sigma_u$, $\sigma_m$.
-Finally, we apply a cut of SNR > 5 in the $i$ band.
-\note{the $m$ above needs an $\alpha$ subscript, and I should start making the $\sigma$'s implicit to simplify things.}
-
-\note{
-    At some point I want to add plots showing how different assumptions of $\bar{s}$ change the mean $\du$.
-    Make a plot $\du(z)$ for several different powerlaws for $\bar{s}$.
-}
+To simulate an observed catalog, we add \lya decrements according to the model in Section \ref{sec:decrements}.
+We then simulate photometric errors according to the \citet{ivezic2019} error model, including the low SNR generalization presented in \needscite and the extension to Euclid and Roman presented in \citet{graham2020}.
+We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}_\alpha$.
+Finally, we cut galaxies that have negative fluxes in any bands and apply a cut of SNR > 5 in the $i$ band.
 
 \subsection{Selecting the high-redshift sample}
 \label{sec:photo-z}

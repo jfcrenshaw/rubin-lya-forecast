@@ -2,7 +2,6 @@ version: 0.3.0
 dependencies:
   src/tex/ms.tex:
     - src/tex/bib.bib
-    - src/tex/output/sbar_percent_diff.txt
   src/scripts/plot_decrements:
     - src/data/bandpasses
     - src/scripts/utils/calculate_extinction.py

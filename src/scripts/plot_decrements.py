@@ -34,13 +34,5 @@ ax2.set(
     xlim=(zs.min(), zs.max()),
 )
 
+# save the figure
 fig.savefig(paths.figures / "decrements.pdf")
-
-# finally, we will calculate the impact of changing the spectral indices
-du_2 = lya_decrement(3, "u", -2)
-du_0 = lya_decrement(3, "u", 0)
-percent_diff = abs((du_0 - du_2) / du_0)
-
-# and save it!
-file_name = paths.output / "sbar_percent_diff.txt"
-open(file_name, "w").write(f"{100 * percent_diff:.0f}")

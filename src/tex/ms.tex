@@ -24,7 +24,7 @@
 \newcommand{\comment}[1]{}
 
 % note command for inline notes
-\newcommand{\note}[1]{\textsf{\textcolor{red}{#1}}}
+\newcommand{\note}[1]{\textsf{\textcolor{red}{#1}}\xspace}
 % command to note a missing citation
 \newcommand{\needscite}{\note{[needs citation]}}
 
@@ -218,7 +218,7 @@ The left panel of Figure \ref{fig:decrements} shows the LSST $u$ band decrement 
 Lower values of $\alpha$ correspond to a bluer spectrum, which gives greater weight to lower redshifts.
 This results in a greater magnitude decrement at low redshifts.
 However, as the optical depth of the \lya increases with redshift (c.f. Equation \ref{eq:tau}), redder spectra corresponding to greater values of $alpha$ have greater magnitude decrements at high redshift.
-For the values of $\alpha$ chosen, this is a \input{output/sbar_percent_diff.txt}\unskip\% difference.
+For the values of $\alpha$ chosen, this is a 2\% difference.
 For the rest of this paper, we will assume $\alpha=0$.
 
 The right panel of Figure \ref{fig:decrements} shows expected magnitude decrements as a function of redshift for the three bluest LSST bands.
@@ -241,8 +241,8 @@ For an estimate of the SNR on measurements of \lya variations due to large scale
 \subsection{The simulated catalog}
 \label{sec:catalog}
 
-We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium simulation \needscite.
-This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry and NIR photometry from Euclid and the Roman Space Telescope.
+We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium simulation \citep{springel2005}, including the galaxy formation models of \citep{gonzalez-perez2014} and lightcones from \citep{merson2013}.
+This catalog contains $700\,000$ galaxies up to redshift 3.5, with optical LSST photometry and NIR photometry from Euclid and the Roman Space Telescope.
 This constitutes the truth catalog.
 
 Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
@@ -259,26 +259,27 @@ Finally, we cut galaxies that have negative fluxes in any bands and apply a cut 
 \label{sec:photo-z}
 
 \note{I probably want to swap $m \to m_\alpha$.}
-We train an ensemble of normalizing flows to model the conditional distribution $p(z, u | m)$ \needscite.
+We train an ensemble of normalizing flows to model the conditional distribution $p(z, u | m_\alpha)$ \needscite.
 Note this ensemble is trained on the truth catalog, imagining a galaxy simulation that matches reality.
 \note{
     I need to actually write this section.
     I can probably refer the ensemble setup to that described in my pzflow paper.
 }
 
-Once we have trained the model, we create a high-redshift sample whose $u$ band magnitudes are maximally impacted by \lya scattering via applying the photometric redshift cut
+Now that we have trained the model, we wish to select galaxies at $z > 2.36$ whose $u$ bands are maximally impacted by \lya scattering.
+We select this sample with the following photometric redshift (photo-z) cut:
 \begin{align}
-    \int_{2.36}^\infty dz ~ p(z|\hat{m}, \sigma_m) > 0.95.
+    \int_{2.36}^\infty dz ~ p(z|\hat{m}_\alpha) > 0.95.
     \label{eq:redshift-cut}
 \end{align}
-That is, we select those galaxies whose redshift posteriors indicate a 95\% probability of being above redshift 2.36.
+That is, we select those galaxies whose redshift posteriors indicate a greater than 95\% probability of being above redshift 2.36.
 We can efficiently compute the integral in Equation \ref{eq:redshift-cut} by sampling
 \begin{align}
-    _{i=1}^{~~ M} \{ m^i \, | \, m^i \sim p(m | \hat{m}, \sigma_m) \},
+    _{i=1}^{~~ M} \{ m_\alpha^i \, | \, m_\alpha^i \sim p(m_\alpha | \hat{m}_\alpha) \},
 \end{align}
 from the photometric error model for each galaxy (which is just a Gaussian in flux space), followed by sampling
 \begin{align}
-    _{j=1}^{~~ N} \{ z^{(i,\, j)}, u^{(i,\, j)} \, | \, z^{(i,\, j)}, u^{(i,\, j)} \sim p(z, u | m^i) \},
+    _{j=1}^{~~ N} \{ z^{(i,\, j)}, u^{(i,\, j)} \, | \, z^{(i,\, j)}, u^{(i,\, j)} \sim p(z, u | m_\alpha^i) \},
     \label{eq:samples}
 \end{align}
 from the flow ensemble, and calculating the fraction of $\{ z^{(i, j)} \}$ samples that are above 2.36.
@@ -300,12 +301,12 @@ from the flow ensemble, and calculating the fraction of $\{ z^{(i, j)} \}$ sampl
 
 \subsection{Inference on $\du$}
 
-Now that we have a sample of galaxies at redshift > 2.36, we can perform inference on the $u$ band decrement $\Delta u$.
+Now that we have a sample of galaxies at $z > 2.36$, we can perform inference on the $u$ band decrement $\Delta u$.
 This amounts to using the observed $grizy$ magnitudes to predict $u$, and comparing this predicted value to the observed value, $\hat{u}_\alpha$.
 
 The likelihood for the decrement of each galaxy can be calculated:
 \begin{align}
-    \mathcal{L}(\du) = \int du \, p(\hat{u}_\alpha | u, \du) \, p(u | \hat{m}, z > 2.36).
+    \mathcal{L}(\du) = \int du \, p(\hat{u}_\alpha | u, \du) \, p(u | \hat{m}_\alpha, z > 2.36).
 \end{align}
 This integral can be efficiently computed via reusing the samples from Equation \ref{eq:samples}.
 For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)} < 2.36$, generating a set of samples 
@@ -448,6 +449,12 @@ where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample
 
 \section{Impact of near-infrared photometry}
 \label{sec:nir}
+
+\section{Discussion}
+\label{sec:discussion}
+
+\section{Conclusion}
+\label{sec:conclusion}
 
 
 \bibliography{bib}

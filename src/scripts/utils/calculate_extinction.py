@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 from showyourwork.paths import user as Paths
 
@@ -41,17 +43,17 @@ class Bandpass:
         # initialize the weighted R
         self._R_weighted = self._R
 
-    def R(self, wavelen: np.ndarray) -> np.ndarray:
+    def R(self, wavelen: Union[np.ndarray, float]) -> Union[np.ndarray, float]:
         """Return the bandpass response at the requested wavelength.
 
         Parameters
         ----------
-        wavelen: np.ndarray
+        wavelen: np.ndarray or float
             Wavelength(s) in angstroms.
 
         Returns
         -------
-        np.ndarray
+        np.ndarray or float
             The bandpass response at the requested wavelength(s).
         """
         return np.interp(wavelen, self.wavelen, self._R_weighted, left=0, right=0)
@@ -100,17 +102,17 @@ class Bandpass:
         self._R_weighted = self._R
 
 
-def tau_eff(z: np.ndarray) -> np.ndarray:
+def tau_eff(z: Union[np.ndarray, float]) -> Union[np.ndarray, float]:
     """Return the effective optical depth of the Lyman-alpha Forest at redshift z.
 
     Parameters
     ----------
-    z: np.ndarray
+    z: np.ndarray or float
         Redshift(s)
 
     Returns
     -------
-    np.ndarray
+    np.ndarray or float
         The effective optical depth
     """
     # parameters of the mean Lyman-alpha optical depth
@@ -121,25 +123,25 @@ def tau_eff(z: np.ndarray) -> np.ndarray:
     return TAU_0 * (1 + z) ** TAU_GAMMA
 
 
-def F_bar(z: np.ndarray) -> np.ndarray:
+def F_bar(z: Union[np.ndarray, float]) -> Union[np.ndarray, float]:
     """Return the mean Lyman-alpha transmission at redshift z.
 
     Parameters
     ----------
-    z: np.ndarray
+    z: np.ndarray or float
         Redshift(s)
 
     Returns
     -------
-    np.ndarray
+    np.ndarray or float
         The mean Lyman-alpha transmission.
     """
     return np.exp(-tau_eff(z))
 
 
 def lya_decrement(
-    redshift: np.ndarray, band: str, spectral_index: float = 0
-) -> np.ndarray:
+    redshift: Union[np.ndarray, float], band: str, spectral_index: float = 0
+) -> Union[np.ndarray, float]:
     """Calculate mean Lya decrement for the given band as a function of redshift.
 
     Supports re-weighting the decrements using a different mean galaxy spectrum.
@@ -149,7 +151,7 @@ def lya_decrement(
 
     Parameters
     ----------
-    redshift: np.ndarray
+    redshift: np.ndarray or float
         Array of redshifts at which to calculate the decrement.
     band: str
         Name of the band to calculate decrement for. Supports "u", "g", and "r".
@@ -158,11 +160,11 @@ def lya_decrement(
 
     Returns
     -------
-    np.ndarray
-        Array of Lyman-alpha decrements.
+    np.ndarray or float
+        Lyman-alpha decrements.
     """
     # make sure redshift is an array
-    redshift = np.atleast_1d(redshift)
+    z: np.ndarray = np.atleast_1d(redshift)
 
     # load the bandpass
     bandpass = Bandpass(band)
@@ -172,19 +174,18 @@ def lya_decrement(
     bandpass.reweight_bandpass(bandpass.wavelen, mean_sed)
 
     # get the redshift grid
-    zs = bandpass.wavelen / LYMAN_WAVELEN - 1
-    zs = np.tile(zs, (len(redshift), 1))
+    z_grid = np.tile(bandpass.wavelen / LYMAN_WAVELEN - 1, (len(z), 1))
 
     # calculate the transmission as a function of redshift
-    Fs = F_bar(zs)
+    F_grid = F_bar(z_grid)
 
     # beyond the source redshift, set transmission = 1
-    Fs[zs > redshift[:, None]] = 1
+    F_grid[z_grid > z[:, None]] = 1  # type: ignore
 
     # convert the redshift grid to wavelength
-    wavelens = LYMAN_WAVELEN * (1 + zs)
+    wavelens = LYMAN_WAVELEN * (1 + z_grid)
 
     # calculate the decrements
-    decrements = -2.5 * np.log10(np.trapz(bandpass.R(wavelens) * Fs, wavelens))
+    decrements = -2.5 * np.log10(np.trapz(bandpass.R(wavelens) * F_grid, wavelens))
 
     return decrements.squeeze()

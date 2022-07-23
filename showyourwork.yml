@@ -1,5 +1,7 @@
 version: 0.3.0
 dependencies:
+  src/tex/ms.tex:
+    - src/tex/bib.bib
   src/scripts/plot_decrements:
     - src/data/bandpasses
     - src/scripts/utils/calculate_extinction.py

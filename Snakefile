@@ -1,3 +1,14 @@
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+HTTP = HTTPRemoteProvider()
+
+rule download_bib_file:
+    input:
+        HTTP.remote("https://raw.githubusercontent.com/jfcrenshaw/bibfile/main/My%20Library.bib")
+    output:
+        "src/tex/bib.bib"
+    shell:
+        "cp {input[0]} {output[0]}"
+
 rule download_bandpasses:
     output:
         directory("src/data/bandpasses")

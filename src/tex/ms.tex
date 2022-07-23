@@ -98,8 +98,8 @@
     Most of this gas is hydrogen, and after reionization, most of this hydrogen is ionized.
     However, a small fraction of this hydrogen is neutral (describe why - how is it protected).
     Despite it's low density, this gas has a very high cross section with photons at $\lambda_\alpha$, which excites the \lya transition.
-    This causes the neutral gas to scatter light at this wavelength out of the line-of-sight of the observer.
-    Many such scatterings along the line-of-sight create a plethora of absorption lines blueward of the \lya emission line.
+    This causes the neutral gas to scatter light at this wavelength out of the line of sight of the observer.
+    Many such scatterings along the line of sight create a plethora of absorption lines blueward of the \lya emission line.
     These many absorption lines can be observed in the spectra of high-redshift objects.
     This feature has been named the \lya Forest.
 }
@@ -145,71 +145,60 @@
     Hopefully, we can test the method during early LSST science.
 }
 
-\section{The photometric Lyman-alpha signal}
+\section{The impact of Lyman-alpha scattering on photometry}
 
 \label{sec:signal}
 
-Assume that a distant galaxy has an intrinsic SED $f_0(\lambda)$ in the rest frame of the observer.
-\lya scattering in the IGM modifies the SED, resulting in the observed SED $f(\lambda) = F(\lambda) f_0(\lambda)$, where $F(\lambda)$ is the transmission of the \lya Forest.
-Note that $F(\lambda)$ traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line-of-sight.
+Assume that a distant galaxy has an intrinsic SED $f(\lambda)$ in the rest frame of the observer.
+\lya scattering in the IGM modifies the SED, resulting in the observed SED $f_\alpha(\lambda) = F(\lambda) f(\lambda)$, where $F(\lambda)$ is the transmission of the \lya Forest.
+Note that $F(\lambda)$ traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line of sight, where $\lambda_\alpha = 1216$\AA is the wavelength of the \lya transition.
 
 Photometric surveys do not observe the SED directly, but rather the flux of the SED integrated over a bandpass:
 \begin{align}
-    f = \int d\lambda \, R(\lambda) F(\lambda) f_0(\lambda),
+    f_\alpha = \int d\lambda \, R(\lambda) F(\lambda) f(\lambda),
 \end{align}
 where $R(\lambda)$ is the response function of the photometric band.
 We can define the \emph{photometric transmission}:
 \begin{align}
-    F = \frac{f}{f_0} = \int d\lambda \, R(\lambda) F(\lambda) s(\lambda),
+    F = \frac{f_\alpha}{f} = \int d\lambda \, R(\lambda) F(\lambda) s(\lambda),
     \label{eq:F}
 \end{align}
 where $s(\lambda)$ is the shape of the SED, defined
 \begin{align}
-    s(\lambda) = \frac{f_0(\lambda)}{f_0} = \frac{f_0(\lambda)}{\int d\lambda \, R(\lambda) f_0(\lambda)}.
+    s(\lambda) = \frac{f(\lambda)}{f} = \frac{f(\lambda)}{\int d\lambda \, R(\lambda) f(\lambda)}.
 \end{align}
+For photometric surveys, it is also natural to define the magnitude decrement
+\begin{align}
+    \Delta m = -2.5 \log_{10} F.
+\end{align}
+That is, the magnitude of the galaxy will appear $\Delta m$ magnitudes dimmer due to \lya scattering along the line of sight.
 
 The rest frame wavelength of the \lya transition is $\lambda_\alpha = 1216$\AA, and the Rubin $u$ band has support over the wavelengths $3200 < \lambda < 4085$.
-This means that galaxies at $z > 1.63$ will appear dimmer than expected in the $u$ band because some of this light will be scattered by neutral hydrogen along the line-of-sight. 
+This means that galaxies at $z > 1.63$ will appear dimmer than expected in the $u$ band because some of this light will be scattered by neutral hydrogen along the line of sight. 
 This effect will be greatest for galaxies at $z > 2.36$ whose entire $u$ band will be impacted by this scattering.
-Higher redshift galaxies will appear dimmer in longer wavelength bands as well.
+Galaxies at redshift $z > 2.36$ will also appear dimmer in the $g$ band,
+galaxies at $z > ...$ will be dimmer in the $r$, and so on.
+At redshifts $z \gtrsim 6$ prior to reionization, 100\% of the light is blocked.
 
-With a few assumptions, we can estimate the impact  of \lya scattering on LSST $u$ band observations of galaxies at redshifts $z > 2.36$.
-We will assume a fiducial SED shape $\bar{s}(\lambda) = 1$ over the support of the $u$ band.
-The expected transmission can be calculated from the effective optical depth of the \lya Forest reported by [https://arxiv.org/pdf/1904.01110.pdf]: $\bar{F}(\lambda) = e^{-\tau_\text{eff}(\lambda)}$, where
+With a few assumptions, we can estimate the impact  of \lya scattering on LSST observations.
+For an object at redshift $z$, the expected \lya transmission along the line of sight is
 \begin{align}
-    \tau_\text{eff} = \tau_0 (1 + z)^\gamma,
+    \bar{F}(\lambda) = 
+    \begin{cases}
+        e^{-\tau_\text{eff}(\lambda)}, & \lambda < \lambda_\alpha (1 + z) \\
+        1, & \lambda > \lambda_\alpha (1 + z)
+    \end{cases}.
 \end{align}
-$\tau_\text{eff} = (5.54 \pm 0.64) \times 10^{-3}$ and $\gamma = 3.182 \pm 0.074$.
-With these choices, we can calculate the expected size of the photometric signal in LSST:
+The effective optical depth $\tau_\text{eff}(\lambda)$ is defined by averaging over every line of sight.
+We use the best fit model of \citet{kamble2020}:
 \begin{align}
-    \bar{F} = \int d\lambda \, R(\lambda) \bar{F}(\lambda) \bar{s}(\lambda) = ...
-    \label{eq:Fbar}
+    \tau_\text{eff} = \tau_0 \left( \frac{\lambda}{\lambda_\alpha} \right)^\gamma,
+    \label{eq:tau}
 \end{align}
-This translates to an expected $u$ band decrement $\overbar{\du} = -2.5 \log_{10} \bar{F} = ...$.
-In other words, galaxies at $z > 2.36$ will, on average, appear $...$ magnitudes dimmer in the $u$ band than would otherwise be expected in the absence of the \lya Forest.
+where $\tau_\text{eff} = (5.54 \pm 0.64) \times 10^{-3}$ and $\gamma = 3.182 \pm 0.074$.
 
-The question is whether this decrease in flux can be detected with the Rubin observatory and what cosmological signal can be extracted from it.
-In Section \ref{sec:snr}, we simulate observations and the inference pipeline to calibrate the expected SNR of the signal on a per-galaxy basis.
-In Section \ref{sec:correlations}, we calculate auto- and cross-correlations of the photometric \lya signal to determine the expected SNR of the signal in a cosmological analysis.
-
-
-\section{Estimating signal-to-noise}
-\label{sec:snr}
-
-In this section, we simulate Rubin observations to calibrate the expected SNR of the photometric \lya signal on a per-galaxy basis.
-We will not simulate variations in the \lya signal due to large scale structure, because these variations are greatly subdominant to the uncertainties in estimating $\du$, and will therefore not impact our signal-to-noise estimate in this section.
-For an estimate of the SNR on measurements of the \lya variations due to large scale structure, see Section \ref{sec:correlations}
-
-\subsection{The simulated catalog}
-
-We use the simulated galaxy catalog of [Cite both of Melissa's papers] \needscite, which is based on the Millennium simulation \needscite.
-This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry and near-infrared (NIR) photometry from Euclid and the Roman Space Telescope.
-This constitutes the truth catalog.
-
-Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
-We will use the variable $m$ to refer to the vector of all other intrinsic magnitudes, and the variable $m_\alpha$ to refer to their values including \lya extinction.
-For most of the paper, $m$/$m_\alpha$ refer only to the LSST $grizy$ bands.
-In Section \ref{sec:nir}, we consider the inclusion of Euclid $YJH$ and Roman $YJHF$ bands.
+To calculate expected magnitude decrements, we must also assume the shape of the mean SED over the bandpass of interest.
+For simplicity, we will assume $\bar{s}(\lambda) \propto \lambda ^ \alpha$, and compare decrements for multiple choices of the spectral index $\alpha$.
 
 \begin{figure*}[t!]
     \script{plot_decrements.py}
@@ -221,6 +210,54 @@ In Section \ref{sec:nir}, we consider the inclusion of Euclid $YJH$ and Roman $Y
         \label{fig:decrements}
     \end{centering}
 \end{figure*}
+
+The left panel of Figure \ref{fig:decrements} shows the LSST $u$ band decrement as a function of redshift for three different choices of $\alpha$.
+Lower values of $\alpha$ correspond to a bluer spectrum, which gives greater weight to lower redshifts.
+This results in a greater magnitude decrement at low redshifts.
+However, as the optical depth of the \lya increases with redshift (c.f. Equation \ref{eq:tau}), redder spectra corresponding to greater values of $alpha$ have greater magnitude decrements at high redshift.
+Overall, the difference between the curves is not substantial.
+For the rest of this paper, we will assume $\alpha=0$.
+
+The right panel of Figure \ref{fig:decrements} shows expected magnitude decrements as a function of redshift for the three bluest LSST bands.
+On each curve, the redshift at which the decrement begins to rise (plateau) signifies the redshift at which the \lya transition enters (leaves) the corresponding band.
+\note{
+    To give a sense for the scale of these decrements, we plot the expected photometric error as a function of redshift for the $u$ and $g$ bands (the errors were calculated using the \citep{ivezic2019} error model, assuming 10 years of observation; see Section \ref{sec:catalog}).
+}
+
+To give a sense of the significance of these decrements, we plot the expected photometric error for each band as a function of 
+
+\note{
+    Mention the plot here.
+    The left side shows $u$ band decrements for different values of $alpha$.
+    The results are relatively insensitive to this choice, so for now, we use $\alpha=0$.
+    The right hand side shows the expected decrements for the 3 bluest bands, as a function of redshift.
+    To get an idea of the scale, we plot the expected photometric errors for these bands as a function of redshift (Y1 or Y10?)
+}
+
+The question of this paper is whether this decrease in flux can be detected with the Rubin observatory and what cosmological signal can be extracted from it.
+\note{I need to state the $u$ band focus here.}
+In Section \ref{sec:snr}, we simulate observations and the inference pipeline to calibrate the expected SNR of the signal on a per-galaxy basis.
+In Section \ref{sec:correlations}, we calculate auto- and cross-correlations of the photometric \lya signal to determine the expected SNR of the signal in a cosmological analysis.
+
+
+\section{Calibrating signal-to-noise}
+\label{sec:snr}
+
+In this section, we simulate Rubin observations to calibrate the expected SNR of the photometric \lya signal on a per-galaxy basis.
+We will not simulate variations in the \lya signal due to large scale structure, because these variations are greatly subdominant to the uncertainties in estimating $\du$, and will therefore not impact our signal-to-noise estimate in this section.
+For an estimate of the SNR on measurements of the \lya variations due to large scale structure, see Section \ref{sec:correlations}
+
+\subsection{The simulated catalog}
+\label{sec:catalog}
+
+We use the simulated galaxy catalog of [Cite both of Melissa's papers] \needscite, which is based on the Millennium simulation \needscite.
+This catalog contains \note{N} galaxies up to redshift \note{N}, with optical LSST photometry and near-infrared (NIR) photometry from Euclid and the Roman Space Telescope.
+This constitutes the truth catalog.
+
+Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
+We will use the variable $m$ to refer to the vector of all other intrinsic magnitudes, and the variable $m_\alpha$ to refer to their values including \lya extinction.
+For most of the paper, $m$/$m_\alpha$ refer only to the LSST $grizy$ bands.
+In Section \ref{sec:nir}, we consider the inclusion of Euclid $YJH$ and Roman $YJHF$ bands.
 
 \note{change this to include all band decrements.}
 To simulate an observed catalog, we add $u$ band decrements to galaxies at redshifts $z > 1.63$ to account for the \lya scattering of the $u$ band flux.
@@ -315,6 +352,10 @@ You can see likelihoods for three example galaxies in Figure \note{N}.
     This isn't great SNR, but in the next section we will calculate correlation functions that have much greater SNRs.
 }
 
+\note{
+    Plot the effective error as a function of LSST year!
+}
+
 
 \section{Auto- and cross-correlations of the Lyman-alpha signal}
 
@@ -323,7 +364,7 @@ We can calculate correlations of the \lya signal with itself and other tracers o
 This also allows us to combine information from many galaxies and boost the relatively modest SNR of the photometric \lya signal for a single galaxy, as well as test for systematic errors that may plague our analysis.
 I will first develop the formalism of the photometric \lya tracer, before calculating auto- and cross-correlations in the following subsections.
 
-\lya correlation functions are usually computed in terms of the transmission $F(\lambda)$, which traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line-of-sight.
+\lya correlation functions are usually computed in terms of the transmission $F(\lambda)$, which traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line of sight.
 For the rest of this section, we will work in terms of redshift $z$ instead of wavelength $\lambda$. 
 This requires us to make the replacement $d\lambda \to \lambda_\alpha dz$ in our integrals, where $\lambda_\alpha$ is the wavelength of the \lya transition.
 
@@ -351,12 +392,12 @@ In Fourier space,
     \delta_F(\textbf{k}) = b_F (1 + \mu_\textbf{k}^2 \beta_F) \delta_b(\textbf{k}),
     \label{eq:fourier-tracer}
 \end{align}
-where $b_F \approx -0.13$ is the linear bias of the \lya field, $\beta_F \approx 1.5$ measures the strength of redshift-space distortions (RSD)\footnote{Unlike the galaxy tracer (c.f. Equation \ref{eq:galaxy-tracer}), $\beta$ is another free parameter. \note{This has to do with the nonlinear transformation applied to the optical depth? I need to work on understanding this.}}, $\mu_\textbf{k}$ is the cosine between the mode $\textbf{k}$ and the line-of-sight, and $\delta_b(\textbf{k})$ are the Fourier space fluctuations of the baryon density field \needscite.
+where $b_F \approx -0.13$ is the linear bias of the \lya field, $\beta_F \approx 1.5$ measures the strength of redshift-space distortions (RSD)\footnote{Unlike the galaxy tracer (c.f. Equation \ref{eq:galaxy-tracer}), $\beta$ is another free parameter. \note{This has to do with the nonlinear transformation applied to the optical depth? I need to work on understanding this.}}, $\mu_\textbf{k}$ is the cosine between the mode $\textbf{k}$ and the line of sight, and $\delta_b(\textbf{k})$ are the Fourier space fluctuations of the baryon density field \needscite.
 Note that the bias is negative as more neutral hydrogen corresponds to less transmitted flux.
 
 The bias and RSD make this tracer look like the projected galaxy density tracer (c.f. Equation \ref{eq:galaxy-tracer}), but similar to gravitational lensing tracers (c.f. Section \note{N}), it is sensitive to density integrated over the lines-of-sight to background sources.
 The integral in Equation \ref{eq:lya-tracer} means the photometric tracer is relatively insensitive to the RSD term in Equation \ref{eq:fourier-tracer}.
-This is because the RSD term only contributes to modes along the line-of-sight (due to the cosine $\mu_\textbf{k}$).
+This is because the RSD term only contributes to modes along the line of sight (due to the cosine $\mu_\textbf{k}$).
 Modes with wavelength less than the width of the redshift kernel will cancel each other in the integral, and modes longer than the width of the redshift kernel will be indistinguishable from \note{$\bar{F}$ or something to do with $s$?}.
 \note{
     I should test if the correlations are relatively independent of $\beta$!
@@ -431,6 +472,8 @@ where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample
 \section{Impact of near-infrared photometry}
 \label{sec:nir}
 
+
+\bibliography{bib}
 
 
 \end{document}

@@ -12,31 +12,13 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 2.7), constrained_layout=True)
 
 # plot the u band decrements as a function of spectral index
 zs = np.linspace(1.6, 2.4, 1000)
-ax1.plot(
-    zs,
-    lya_decrement(zs, "u", -2),
-    label="$\\bar{s}(\lambda) \propto \lambda^{-2}$",
-    c="C0",
-    ls="--",
-)
-ax1.plot(
-    zs,
-    lya_decrement(zs, "u", 0),
-    label="$\\bar{s}(\lambda) \propto \lambda^{0}$",
-    c="C0",
-    ls="-",
-)
-ax1.plot(
-    zs,
-    lya_decrement(zs, "u", 2),
-    label="$\\bar{s}(\lambda) \propto \lambda^{2}$",
-    c="C0",
-    ls=":",
-)
+ax1.plot(zs, lya_decrement(zs, "u", -2), label="$\\alpha = -2$", c="C0", ls="--")
+ax1.plot(zs, lya_decrement(zs, "u", 0), label="$\\alpha =  0$", c="C0", ls="-")
+ax1.plot(zs, lya_decrement(zs, "u", +2), label="$\\alpha = +2$", c="C0", ls=":")
 ax1.legend(title="$\Delta u$", handlelength=1)
 ax1.set(
     xlabel="redshift",
-    ylabel="mags",
+    ylabel="Lyman-$\\alpha$ decrement [mags]",
     xlim=(zs.min(), zs.max()),
 )
 
@@ -48,7 +30,7 @@ ax2.plot(zs, lya_decrement(zs, "r"), label="$\Delta r$")
 ax2.legend()
 ax2.set(
     xlabel="redshift",
-    ylabel="mags",
+    ylabel="Lyman-$\\alpha$ decrement [mags]",
     xlim=(zs.min(), zs.max()),
 )
 

@@ -1,5 +1,8 @@
 version: 0.3.0
 dependencies:
+  src/scripts/plot_decrements:
+    - src/data/bandpasses
+    - src/scripts/utils/calculate_extinction.py
   src/scripts/load_truth_catalog.py:
     - src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat
   src/scripts/create_observed_catalogs.py:

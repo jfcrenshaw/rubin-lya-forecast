@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from showyourwork.paths import user as Paths
-from utils import load_truth_catalog
+from utils import load_truth_catalog, lya_decrement
 from utils.error_models import EuclidErrorModel, LSSTErrorModel, RomanErrorModel
 
 # instantiate the paths
@@ -11,6 +11,12 @@ paths = Paths()
 
 # load the truth catalog
 truth_catalog = load_truth_catalog()
+
+# add lya extinction
+spec_idx = 0
+truth_catalog.u = truth_catalog.u + lya_decrement(truth_catalog.redshift, "u", spec_idx)
+truth_catalog.g = truth_catalog.g + lya_decrement(truth_catalog.redshift, "g", spec_idx)
+truth_catalog.r = truth_catalog.r + lya_decrement(truth_catalog.redshift, "r", spec_idx)
 
 # first I will determine the set of galaxies that have positive fluxes in LSST Y10,
 # Euclid, and Roman, AND passes the LSST Y10 SNR cut
@@ -47,7 +53,7 @@ euclid_catalog = euclid_catalog[mask]
 roman_catalog = roman_catalog[mask]
 
 # create the directory where the catalogs will be saved
-catalog_dir = paths.data / "processed_catalogs"
+catalog_dir = paths.data / "observed_catalogs"
 Path.mkdir(catalog_dir, exist_ok=True)
 
 # save these maximal catalogs

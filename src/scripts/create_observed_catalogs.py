@@ -16,7 +16,6 @@ truth_catalog = load_truth_catalog()
 spec_idx = 0
 truth_catalog.u = truth_catalog.u + lya_decrement(truth_catalog.redshift, "u", spec_idx)
 truth_catalog.g = truth_catalog.g + lya_decrement(truth_catalog.redshift, "g", spec_idx)
-truth_catalog.r = truth_catalog.r + lya_decrement(truth_catalog.redshift, "r", spec_idx)
 
 # first I will determine the set of galaxies that have positive fluxes in LSST Y10,
 # Euclid, and Roman, AND passes the LSST Y10 SNR cut

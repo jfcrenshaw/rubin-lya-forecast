@@ -17,10 +17,17 @@ rule download_bandpasses:
 
 rule plot_decrements:
     output:
-        "src/figures/decrements.pdf",
-        "src/tex/output/sbar_percent_diff.txt"
+        "src/figures/decrements.pdf"
     script:
         "src/scripts/plot_decrements.py"
+
+rule train_ensembles:
+    output:
+        directory("src/data/models")
+    cache:
+        True
+    script:
+        "src/scripts/train_ensembles.py"
 
 rule create_observed_catalogs:
     input:

@@ -14,6 +14,4 @@ Paper forecasting the SNR for a photometric Lyman-alpha signal detected with the
 
 To Do:
 
-- Fix the observed catalogs so they contain Lya extinction
-- Save a version of the truth catalog that includes the impacts of Lya extinction on m.
-- Finish reworking the notation in the manuscript
+- Re-train the ensembles for longer. It looks like they could train longer!

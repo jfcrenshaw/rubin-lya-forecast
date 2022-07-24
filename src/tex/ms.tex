@@ -456,6 +456,23 @@ where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample
 \section{Conclusion}
 \label{sec:conclusion}
 
+\appendix
+\section{Training the ensembles}
+
+\note{Need to write this!}
+
+\begin{figure*}[t!]
+    \script{plot_ensemble_losses.py}
+    \begin{centering}
+        \includegraphics{figures/ensemble_losses.pdf}
+        \caption{
+            The training losses of the three ensembles of normalizing flows, trained to model the conditional distributions $p(z, u|m_\alpha)$.
+        }
+        \label{fig:losses}
+    \end{centering}
+\end{figure*}
+
+
 
 \bibliography{bib}
 

@@ -62,7 +62,7 @@ roman_catalog.to_pickle(catalog_dir / "lsstY10+roman.pkl")
 
 # now loop through the earlier years and generate LSST catalogs
 restricted_catalog = truth_catalog[mask].drop(list("YJHF"), axis=1)
-for year in range(1, 10):
+for year in [1, 3, 5, 7, 10]:
     # build the error model
     lsst_error_model = LSSTErrorModel(nYrObs=year)
 

@@ -36,3 +36,42 @@ rule create_observed_catalogs:
         directory("src/data/observed_catalogs")
     script:
         "src/scripts/create_observed_catalogs.py"
+
+rule perform_redshift_cuts:
+    input:
+        directory("src/data/models"),
+        directory("src/data/observed_catalogs")
+    output:
+        directory("src/data/background_catalogs"),
+        directory("src/data/foreground_catalogs")
+
+rule calculate_redshift_metrics:
+    input:
+        directory("src/data/observed_catalogs"),
+        directory("src/data/background_catalogs"),
+        directory("src/data/foreground_catalogs")
+    output:
+        "src/tex/figures/bg_photoz_metrics.pdf",
+        "src/tex/figures/fg_photoz_metrics.pdf",
+        "src/tex/output/bg_completeness_y1.txt",
+        "src/tex/output/bg_completeness_y10.txt",
+        "src/tex/output/bg_completeness_y10+euclid.txt",
+        "src/tex/output/bg_completeness_y10+roman.txt",
+        "src/tex/output/bg_purity_y1.txt",
+        "src/tex/output/bg_purity_y10.txt",
+        "src/tex/output/bg_purity_y10+euclid.txt",
+        "src/tex/output/bg_purity_y10+roman.txt",
+        "src/tex/output/fg_completeness_y1.txt",
+        "src/tex/output/fg_completeness_y10.txt",
+        "src/tex/output/fg_completeness_y10+euclid.txt",
+        "src/tex/output/fg_completeness_y10+roman.txt",
+        "src/tex/output/fg_purity_y1.txt",
+        "src/tex/output/fg_purity_y10.txt",
+        "src/tex/output/fg_purity_y10+euclid.txt",
+        "src/tex/output/fg_purity_y10+roman.txt",
+        "src/tex/output/bg_size_y1.txt",
+        "src/tex/output/bg_size_y10.txt",
+        "src/tex/output/bg_size_y10+euclid+roman.txt",
+        "src/tex/output/fg_size_y1.txt",
+        "src/tex/output/fg_size_y10.txt",
+        "src/tex/output/fg_size_y10+euclid+roman.txt"

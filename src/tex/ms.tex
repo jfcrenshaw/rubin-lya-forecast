@@ -146,6 +146,10 @@
     Hopefully, we can test the method during early LSST science.
 }
 
+\note{
+    Talk about Roman and Euclid, list their estimated overlap with LSST, and cite the papers I have stored for them.
+}
+
 \section{The impact of Lyman-alpha scattering on photometry}
 \label{sec:decrements}
 
@@ -236,39 +240,50 @@ Then, in Section \ref{sec:correlations}, we calculate auto- and cross-correlatio
 \section{Calibrating the signal-to-noise}
 \label{sec:snr}
 
-In this section, we simulate Rubin observations to calibrate the expected SNR of the photometric \lya signal for individual galaxies.
+In this section, we simulate Rubin, Euclid, and Roman observations to calibrate the expected SNR of the photometric \lya signal for individual galaxies.
 We will not simulate variations in the \lya signal due to large scale structure, because these variations are subdominant to the uncertainties in estimating $\du$, and will therefore not impact our signal-to-noise estimate in this section.
 For an estimate of the SNR on measurements of \lya variations due to large scale structure, see Section \ref{sec:correlations}.
 
 \subsection{The simulated catalog}
 \label{sec:catalog}
 
-We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium simulation \citep{springel2005}, including the galaxy formation models of \citep{gonzalez-perez2014} and lightcones from \citep{merson2013}.
+We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium simulation \citep{springel2005}, including the galaxy formation models of \citep{gonzalez-perez2014} and light cones from \citep{merson2013}.
 This catalog contains $700\,000$ galaxies up to redshift 3.5, with optical LSST photometry and NIR photometry from Euclid and the Roman Space Telescope.
 This constitutes the truth catalog.
+We reserve $100\,000$ randomly selected galaxies for training the inference model (see Section \ref{sec:photo-z}), and use the remaining $600\,000$ to simulate observed catalogs.
 
 Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
 We will use the variable $m$ to refer to the vector of all other intrinsic magnitudes, and the variable $m_\alpha$ to refer to their values including \lya extinction.
-For most of the paper, $m$/$m_\alpha$ refer only to the LSST $grizy$ bands.
-In Section \ref{sec:nir}, we consider the inclusion of Euclid $YJH$ and Roman $YJHF$ bands.
+Depending on the context, $m$/$m_\alpha$ might refer to only the LSST $grizy$ bands, or might include the Euclid $YJH$ or Roman $YJHF$ bands.
 
 To simulate an observed catalog, we add \lya decrements according to the model in Section \ref{sec:decrements}.
-We then simulate photometric errors according to the \citet{ivezic2019} error model, including the low SNR generalization presented in \needscite and the extension to Euclid and Roman presented in \citet{graham2020}.
+We then simulate photometric errors according to the \citet{ivezic2019} error model, including the low SNR generalization presented in \citet{pzflow} and the extension to Euclid and Roman presented in \citet{graham2020}.
 We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}_\alpha$.
 Finally, we cut galaxies that have negative fluxes in any bands and apply a cut of SNR > 5 in the $i$ band.
+
+The photometric errors are a function of survey depth, which increases with observing time.
+As such, we simulate errors for LSST survey durations from 1-10 years to study how the SNR changes over time.
 
 \subsection{Selecting the high-redshift sample}
 \label{sec:photo-z}
 
-\note{I probably want to swap $m \to m_\alpha$.}
-We train an ensemble of normalizing flows to model the conditional distribution $p(z, u | m_\alpha)$ \needscite.
-Note this ensemble is trained on the truth catalog, imagining a galaxy simulation that matches reality.
-\note{
-    I need to actually write this section.
-    I can probably refer the ensemble setup to that described in my pzflow paper.
-}
+\begin{figure}[t!]
+    \script{calculate_photoz_metrics.py}
+    \begin{centering}
+        \includegraphics{figures/bg_photoz_metrics.pdf}
+        \caption{
+            \note{Write this!}
+        }
+        \label{fig:bg_photoz_metrics}
+    \end{centering}
+\end{figure}
 
-Now that we have trained the model, we wish to select galaxies at $z > 2.36$ whose $u$ bands are maximally impacted by \lya scattering.
+We train an ensemble of 10 normalizing flows using PZFlow \citep{pzflow} to model the conditional distribution $p(z, u | m_\alpha)$.
+We train the flows on $100\,000$ randomly selected galaxies from the truth catalog.
+We add the expected decrements to the $g$ band (see Figure \ref{fig:decrements}), so that the training set is representative of $\{z, u m_\alpha\}$.
+For more details about training the flows, see Appendix \ref{app:training}.
+
+With the trained model, we wish to select galaxies at $z > 2.36$ whose $u$ bands are maximally impacted by \lya scattering.
 We select this sample with the following photometric redshift (photo-z) cut:
 \begin{align}
     \int_{2.36}^\infty dz ~ p(z|\hat{m}_\alpha) > 0.95.
@@ -285,21 +300,26 @@ from the photometric error model for each galaxy (which is just a Gaussian in fl
     \label{eq:samples}
 \end{align}
 from the flow ensemble, and calculating the fraction of $\{ z^{(i, j)} \}$ samples that are above 2.36.
+We use $M=\variable{output/M.txt}$ and $N=\variable{output/M.txt}$.
 
-\note{
-    State the values I use for $M, N$.
-    Maybe also leave $p_\text{cut}$ general, and state my choice when I state $M, N$?
-}
+The results of the redshift cut are shown in Figure \ref{fig:bg_photoz_metrics}.
+The purity is defined as the fraction of galaxies in the sample that are truly at $z > 2.36$.
+The integral threshold in Equation \ref{eq:redshift-cut} was chosen to ensure a high purity.
+As LSST progresses through its 10 years of observation, the purity rises from \variable{output/bg_purity_y1.txt} to \variable{output/bg_purity_y10.txt}.
+Samples with NIR photometry from Euclid \note{[check later]} or Roman have purity of nearly 1.0.
 
-\note{
-    Discuss the completeness and purity of the redshift sample.
-    Discuss its growth as a function of survey time.
-    Discuss how the probability cut was selected to favor purity, and show the plot of the tradeoff between purity and completeness.
-}
+The necessary sacrifice for high purity is low completeness.
+Completeness is defined as the fraction of galaxies that truly are at $z > 2.36$ that survive the redshift cut of Equation \ref{eq:redshift-cut}.
+LSST is expected to have a completeness of roughly \variable{output/bg_completeness_y1.txt} at year 1, rising only to \variable{output/bg_completeness_y10.txt} by year 10.
+This is where the inclusion of NIR data is really helpful.
+Samples with Euclid photometry are expected to have a completeness of \variable{output/bg_completeness_y10+euclid.txt} and samples with Roman photometry are expected to have a completeness of \variable{output/bg_completeness_y10+roman.txt}.
 
-\note{
-    Project the size of the sample for LSST.
-}
+\citet{descSRD} estimates the LSST year 10 gold sample ($i < 25.3$) will have a number density of $48~\mathrm{arcmin}^{-2}$.
+Multiplying this by $18\,000 \deg^2$ of survey area yields a catalog of 3 billion galaxies.
+Scaling our truth catalog to the same number provides an estimate for the size of our samples in the real LSST catalog.
+Our sample is projected to contain \variable{output/bg_size_y1.txt} million galaxies at year 1, and \variable{output/bg_size_y10.txt} million galaxies by year 10.
+Adding the NIR data, and assuming $8000\deg^2$ overlap with Euclid and $2200\deg^2$ overlap with Roman, the sample grows to \variable{output/bg_size_y10+euclid+roman.txt} million galaxies.
+We find that, despite our low completeness, we still have very large galaxy samples due to the immense size of the LSST catalog.
 
 \subsection{Inference on $\du$}
 
@@ -448,10 +468,6 @@ where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample
     Or even Daniel Gruen?
 }
 
-
-\section{Impact of near-infrared photometry}
-\label{sec:nir}
-
 \section{Discussion}
 \label{sec:discussion}
 
@@ -469,13 +485,14 @@ where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample
     matplotlib \citep{matplotlib} with colors from \citet{colors},
     numpy \citep{numpy},
     pandas \citep{pandas,pandas-software},
-    PZFlow \needscite,
+    PZFlow \citep{pzflow},
     seaborn \citep{seaborn},
     showyourwork \citep{showyourwork},
 }
 
 \appendix
 \section{Training the ensembles}
+\label{app:training}
 
 \note{
     Need to write this!

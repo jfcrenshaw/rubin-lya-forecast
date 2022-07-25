@@ -5,12 +5,14 @@ import numpy as np
 import pandas as pd
 from pzflow import FlowEnsemble
 
+# set the number of samples for inference
+m_samples = 100
+zu_samples = 5
+
 
 def sample_with_errors(
     catalog: pd.DataFrame,
     ensemble: FlowEnsemble,
-    M: int,
-    N: int,
     seed: int = 0,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Sample from the ensemble while sampling from the photometric errors.
@@ -21,19 +23,15 @@ def sample_with_errors(
         The catalog on which to condition the samples.
     ensemble: FlowEnsemble
         The PZFlow FlowEnsemble to sample from.
-    M: int
-        The number of samples to draw from the photometric error distributions.
-    N: int
-        The number of z, u samples to draw.
     seed: int
         The random seed for samples.
 
     Returns
     -------
     np.ndarray
-        2D array of redshift samples, shape: (len(catalog), N)
+        2D array of redshift samples
     np.ndarray
-        2D array of u band samples, shape: (len(catalog), N)
+        2D array of u band samples
     """
     # get the list of conditional columns
     cols = ensemble.conditional_columns
@@ -43,9 +41,9 @@ def sample_with_errors(
     fluxes = 10 ** (catalog[cols].to_numpy() / -2.5)
     flux_errs = (10 ** (catalog[err_cols].to_numpy() / 2.5) - 1) * fluxes
 
-    # get M samples from the photometric error distributions
+    # sample from the photometric error distribution
     rng = np.random.default_rng(seed)
-    eps = rng.normal(size=(fluxes.shape[0], M, fluxes.shape[-1]))
+    eps = rng.normal(size=(fluxes.shape[0], m_samples, fluxes.shape[-1]))
     fluxes = fluxes[:, None, :] + flux_errs[:, None, :] * eps
     fluxes = fluxes.reshape(-1, fluxes.shape[-1])
 
@@ -61,7 +59,7 @@ def sample_with_errors(
 
     # sample from the ensemble
     samples = ensemble.sample(
-        N,
+        zu_samples,
         conditions=conditions,
         save_conditions=False,
         seed=rng.integers(int(1e12)),

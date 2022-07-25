@@ -27,10 +27,6 @@ Path.mkdir(bg_dir, exist_ok=True)
 fg_dir = paths.data / "foreground_catalogs"
 Path.mkdir(fg_dir, exist_ok=True)
 
-# set the sampling numbers
-M = 100  # number of samples from the photometric error distributions
-N = 1  # 10  # number of z, u samples per photometric sample
-
 # loop over every observed catalog
 for file in catalog_dir.glob("*.pkl"):
     print("performing redshift cuts for", file.stem)
@@ -55,7 +51,7 @@ for file in catalog_dir.glob("*.pkl"):
         batch = catalog[idx : idx + batch_size]
 
         # draw redshift samples
-        z_samples, u_samples = sample_with_errors(batch, ensemble, M, N, seed=idx)
+        z_samples, u_samples = sample_with_errors(batch, ensemble, seed=idx)
 
         # photo-z cuts
         bg_flags += list((z_samples > 2.36).mean(axis=1) >= 0.95)
@@ -68,8 +64,3 @@ for file in catalog_dir.glob("*.pkl"):
     # foreground catalog
     fg_file = fg_dir / Path(file.stem + "_fg.pkl")
     catalog[fg_flags].to_pickle(fg_file)
-    break
-
-# finally save the sampling numbers
-open(paths.output / "M.txt", "w").write(f"{M}")
-open(paths.output / "N.txt", "w").write(f"{N}")

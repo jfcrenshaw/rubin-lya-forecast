@@ -40,38 +40,41 @@ rule create_observed_catalogs:
 rule perform_redshift_cuts:
     input:
         directory("src/data/models"),
-        directory("src/data/observed_catalogs")
+        directory("src/data/observed_catalogs"),
+        "src/scripts/utils/sample_with_errors.py"
     output:
         directory("src/data/background_catalogs"),
         directory("src/data/foreground_catalogs")
+    script:
+        "src/scripts/perform_redshift_cuts.py"
 
-rule calculate_redshift_metrics:
+rule calculate_photoz_metrics:
     input:
         directory("src/data/observed_catalogs"),
         directory("src/data/background_catalogs"),
         directory("src/data/foreground_catalogs")
     output:
-        "src/tex/figures/bg_photoz_metrics.pdf",
-        "src/tex/figures/fg_photoz_metrics.pdf",
+        "src/data/photoz_metrics_bg.pkl",
+        "src/data/photoz_metrics_fg.pkl"
+    script:
+        "src/scripts/calculate_photoz_metrics.py"
+
+rule save_variables:
+    input:
+        "src/scripts/utils/sample_with_errors.py",
+        "src/data/photoz_metrics_bg.pkl",
+        "src/data/photoz_metrics_fg.pkl"
+    output:
         "src/tex/output/bg_completeness_y1.txt",
         "src/tex/output/bg_completeness_y10.txt",
         "src/tex/output/bg_completeness_y10+euclid.txt",
         "src/tex/output/bg_completeness_y10+roman.txt",
         "src/tex/output/bg_purity_y1.txt",
         "src/tex/output/bg_purity_y10.txt",
-        "src/tex/output/bg_purity_y10+euclid.txt",
-        "src/tex/output/bg_purity_y10+roman.txt",
-        "src/tex/output/fg_completeness_y1.txt",
-        "src/tex/output/fg_completeness_y10.txt",
-        "src/tex/output/fg_completeness_y10+euclid.txt",
-        "src/tex/output/fg_completeness_y10+roman.txt",
-        "src/tex/output/fg_purity_y1.txt",
-        "src/tex/output/fg_purity_y10.txt",
-        "src/tex/output/fg_purity_y10+euclid.txt",
-        "src/tex/output/fg_purity_y10+roman.txt",
         "src/tex/output/bg_size_y1.txt",
         "src/tex/output/bg_size_y10.txt",
         "src/tex/output/bg_size_y10+euclid+roman.txt",
-        "src/tex/output/fg_size_y1.txt",
-        "src/tex/output/fg_size_y10.txt",
-        "src/tex/output/fg_size_y10+euclid+roman.txt"
+        "src/tex/output/m_samples.txt",
+        "src/tex/output/zu_samples.txt"
+    script:
+        "src/scripts/save_variables.py"

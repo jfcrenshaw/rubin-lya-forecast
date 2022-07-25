@@ -14,14 +14,11 @@ Paper forecasting the SNR for a photometric Lyman-alpha signal detected with the
 
 To Do:
 
-- perform the redshift cuts. Plot metrics as a function of survey duration.
 - perform du inference. Check for bias. calculate the effective error as a function of survey duration.
-- remove the separate NIR section? Integrate that stuff in the catalog section, so that it makes sense to plot everything with LSST+Euclid and LSST+Rubin throughout?
 - Write a util that returns the cosmology and other CCL stuff we need in every correlation function
 - write a script that calculates the autocorrelation
 - write a script that calculates the cross correlation with galaxy clustering. Put the figure for the foreground redshift sample in this section!
 - End: troubleshoot the github action
 - End: do a real training set split. Train the FlowEnsembles on a holdout set that I do not estimates redshifts/du for!
 - End: Re-train the ensembles for longer. It looks like they could train longer! ALSO extend upper range for redshift models to z=4. Hopefully this removes edge artifact. And make sure I am training on the right data set. Increase the buffers on u as well.
-- End: increase N in the redshift cuts
-- End: check that the euclid purity for the bg sample worked out in the end
+- End: check that the euclid purity for the bg sample worked out in the end. and the lsst purity for the fg sample.

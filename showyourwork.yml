@@ -11,3 +11,7 @@ dependencies:
     - src/data/models
   src/scripts/create_observed_catalogs.py:
     - src/scripts/utils/error_models.py
+  src/scripts/plot_photoz_metrics.py:
+    - src/data/photoz_metrics_bg.pkl
+    - src/data/photoz_metrics_fg.pkl
+    - src/scripts/utils/plot_metric.py

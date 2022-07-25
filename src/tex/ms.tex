@@ -268,13 +268,17 @@ As such, we simulate errors for LSST survey durations from 1-10 years to study h
 \label{sec:photo-z}
 
 \begin{figure}[t!]
-    \script{calculate_photoz_metrics.py}
+    \script{plot_photoz_metrics.py}
     \begin{centering}
-        \includegraphics{figures/bg_photoz_metrics.pdf}
+        \includegraphics{figures/photoz_metrics_bg.pdf}
         \caption{
-            \note{Write this!}
+            Metrics for the $z > 2.36$ redshift sample.
+            The left side of the plot shows how the metric changes during the 10 years of LSST observing, as the survey depth increases and the photometric error decreases.
+            The right side of the plot shows how the metrics improve when adding Euclid or Roman photometry to the LSST year 10 data.
+            The top panel shows the sample purity, which is defined as the fraction of galaxies in the sample that are actually at $z > 2.36$.
+            The bottom panel shows completeness, which is defined as the fraction of $z > 2.36$ galaxies in the truth catalog that made it into our sample.
         }
-        \label{fig:bg_photoz_metrics}
+        \label{fig:photoz_metric_bg}
     \end{centering}
 \end{figure}
 
@@ -300,9 +304,9 @@ from the photometric error model for each galaxy (which is just a Gaussian in fl
     \label{eq:samples}
 \end{align}
 from the flow ensemble, and calculating the fraction of $\{ z^{(i, j)} \}$ samples that are above 2.36.
-We use $M=\variable{output/M.txt}$ and $N=\variable{output/M.txt}$.
+We use $M=\variable{output/m_samples.txt}$ and $N=\variable{output/zu_samples.txt}$.
 
-The results of the redshift cut are shown in Figure \ref{fig:bg_photoz_metrics}.
+The results of the redshift cut are shown in Figure \ref{fig:photoz_metrics_bg}.
 The purity is defined as the fraction of galaxies in the sample that are truly at $z > 2.36$.
 The integral threshold in Equation \ref{eq:redshift-cut} was chosen to ensure a high purity.
 As LSST progresses through its 10 years of observation, the purity rises from \variable{output/bg_purity_y1.txt} to \variable{output/bg_purity_y10.txt}.
@@ -319,7 +323,7 @@ Multiplying this by $18\,000 \deg^2$ of survey area yields a catalog of 3 billio
 Scaling our truth catalog to the same number provides an estimate for the size of our samples in the real LSST catalog.
 Our sample is projected to contain \variable{output/bg_size_y1.txt} million galaxies at year 1, and \variable{output/bg_size_y10.txt} million galaxies by year 10.
 Adding the NIR data, and assuming $8000\deg^2$ overlap with Euclid and $2200\deg^2$ overlap with Roman, the sample grows to \variable{output/bg_size_y10+euclid+roman.txt} million galaxies.
-We find that, despite our low completeness, we still have very large galaxy samples due to the immense size of the LSST catalog.
+Despite the low completeness, we still have very large galaxy samples due to the immense size of the LSST catalog.
 
 \subsection{Inference on $\du$}
 
@@ -421,6 +425,21 @@ The SNR calculations involve the expected per-galaxy uncertainty on the photomet
 }
 
 \subsection{Correlation with galaxy clustering}
+
+\begin{figure}[t!]
+    \script{plot_photoz_metrics.py}
+    \begin{centering}
+        \includegraphics{figures/photoz_metrics_fg.pdf}
+        \caption{
+            Metrics for the $1.63 < z < 2.36$ redshift sample.
+            The left side of the plot shows how the metric changes during the 10 years of LSST observing, as the survey depth increases and the photometric error decreases.
+            The right side of the plot shows how the metrics improve when adding Euclid or Roman photometry to the LSST year 10 data.
+            The top panel shows the sample purity, which is defined as the fraction of galaxies in the sample that are actually at $1.63 < z < 2.36$.
+            The bottom panel shows completeness, which is defined as the fraction of $1.63 < z < 2.36$ galaxies in the truth catalog that made it into our sample.
+        }
+        \label{fig:photoz_metrics_fg}
+    \end{centering}
+\end{figure}
 
 We can correlate the photometric \lya signal with foreground galaxies that lie within the same redshift range as the HI clouds responsible for the \lya scattering of the $u$ band flux.
 In order to perform this cross-correlation, we must photometrically select a sample of foreground tracer galaxies.

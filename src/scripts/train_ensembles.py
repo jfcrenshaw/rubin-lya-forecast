@@ -66,7 +66,7 @@ def train_ensemble(conditional_columns: list) -> Tuple[FlowEnsemble, dict]:
 
     # train the ensemble
     learning_rates = [1e-3, 2e-4, 1e-4]
-    N_epochs = [40, 40, 20]
+    N_epochs = [40, 40, 40]
     seeds = [123, 312, 231]
     losses = [
         ensemble.train(

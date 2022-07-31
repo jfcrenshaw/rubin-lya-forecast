@@ -9,15 +9,23 @@ from utils.error_models import EuclidErrorModel, LSSTErrorModel, RomanErrorModel
 # instantiate the paths
 paths = Paths()
 
+# create the directory where the catalogs will be saved
+catalog_dir = paths.data / "observed_catalogs"
+Path.mkdir(catalog_dir, exist_ok=True)
+
 # load the truth catalog
 truth_catalog = load_truth_catalog()
 
 # add lya extinction
-spec_idx = 0
-truth_catalog.u = truth_catalog.u + lya_decrement(truth_catalog.redshift, "u", spec_idx)
-truth_catalog.g = truth_catalog.g + lya_decrement(truth_catalog.redshift, "g", spec_idx)
+truth_catalog.u = truth_catalog.u + lya_decrement(truth_catalog.redshift, "u", 0)
 
-# first I will determine the set of galaxies that have positive fluxes in LSST Y10,
+# save the perfect catalog
+perfect_catalog = truth_catalog.copy()
+for col in truth_catalog.columns[1:]:
+    perfect_catalog[f"{col}_err"] = np.zeros(len(perfect_catalog))
+perfect_catalog.to_pickle(catalog_dir / "perfect.pkl")
+
+# now I will determine the set of galaxies that have positive fluxes in LSST Y10,
 # Euclid, and Roman, AND passes the LSST Y10 SNR cut
 # This determines the set of galaxies that can be included in any of my catalogs
 
@@ -34,26 +42,50 @@ euclid_catalog = euclid_catalog.drop("F", axis=1)
 roman_error_model = RomanErrorModel()
 roman_catalog = roman_error_model(lsstY10_catalog, seed=0)
 
-# now make an SNR cut on the LSST reference band
-ref_band = "i"
-snr_cut = 5
-mag_cut = lsst_error_model.get_limiting_mags(Nsigma=snr_cut, coadded=True)[ref_band]
-mask1 = lsstY10_catalog[ref_band] < mag_cut
+# make SNR > 3 cuts on all bands
+mask1 = lsstY10_catalog.eval(
+    " & ".join(
+        f"({band} < {cut})"
+        for band, cut in lsst_error_model.get_limiting_mags(
+            Nsigma=1, coadded=True
+        ).items()
+    )
+)
+mask2 = euclid_catalog.eval(
+    " & ".join(
+        f"({band} < {cut})"
+        for band, cut in euclid_error_model.get_limiting_mags(
+            Nsigma=1, coadded=True
+        ).items()
+    )
+)
+mask3 = roman_catalog.eval(
+    " & ".join(
+        f"({band} < {cut})"
+        for band, cut in roman_error_model.get_limiting_mags(
+            Nsigma=1, coadded=True
+        ).items()
+    )
+)
+
+# and a SNR > 5 cut on LSST i
+i_cut = lsst_error_model.get_limiting_mags(Nsigma=5, coadded=True)["i"]
+mask4 = lsstY10_catalog["i"] < i_cut
 
 # also make a cut on galaxies with any negative fluxes
-mask2 = np.isfinite(euclid_catalog).all(axis=1) & np.isfinite(roman_catalog).all(axis=1)
+mask5 = (
+    np.isfinite(lsstY10_catalog).all(axis=1)
+    & np.isfinite(euclid_catalog).all(axis=1)
+    & np.isfinite(roman_catalog).all(axis=1)
+)
 
 # combine these masks into a single cut
-mask = mask1 & mask2
+mask = mask1 & mask2 & mask3 & mask4 & mask5
 
 # apply cuts to our catalogs
 lsstY10_catalog = lsstY10_catalog[mask].drop(list("YJHF"), axis=1)
 euclid_catalog = euclid_catalog[mask]
 roman_catalog = roman_catalog[mask]
-
-# create the directory where the catalogs will be saved
-catalog_dir = paths.data / "observed_catalogs"
-Path.mkdir(catalog_dir, exist_ok=True)
 
 # save these maximal catalogs
 lsstY10_catalog.to_pickle(catalog_dir / "lsstY10.pkl")
@@ -62,16 +94,26 @@ roman_catalog.to_pickle(catalog_dir / "lsstY10+roman.pkl")
 
 # now loop through the earlier years and generate LSST catalogs
 restricted_catalog = truth_catalog[mask].drop(list("YJHF"), axis=1)
-for year in [1, 3, 5, 7, 10]:
+for year in [1, 5, 10]:
     # build the error model
     lsst_error_model = LSSTErrorModel(nYrObs=year)
 
     # add LSST errors
     lsst_catalog = lsst_error_model(restricted_catalog, seed=year)
 
-    # apply the SNR cut on the LSST reference band
-    mag_cut = lsst_error_model.get_limiting_mags(Nsigma=snr_cut, coadded=True)[ref_band]
-    lsst_catalog = lsst_catalog.query(f"{ref_band} < {mag_cut}")
+    # apply the SNR > 3 cut
+    lsst_catalog = lsst_catalog.query(
+        " & ".join(
+            f"({band} < {cut})"
+            for band, cut in lsst_error_model.get_limiting_mags(
+                Nsigma=1, coadded=True
+            ).items()
+        )
+    )
+
+    # apply the SNR > 5 cut on the i band
+    i_cut = lsst_error_model.get_limiting_mags(Nsigma=5, coadded=True)["i"]
+    lsst_catalog = lsst_catalog.query(f"i < {i_cut}")
 
     # cut negative fluxes
     lsst_catalog = lsst_catalog[np.isfinite(lsst_catalog).all(axis=1)]

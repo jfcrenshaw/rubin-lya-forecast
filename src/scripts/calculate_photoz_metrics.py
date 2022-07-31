@@ -18,7 +18,7 @@ fg_dir = paths.data / "foreground_catalogs"
 
 # define scaling variables for calculating projected sample size
 # the lsst_scale scales sim's gold sample -> projected lsst gold sample
-lsst_scale = 3e9 / load_truth_catalog().query("i < 25.3").shape[0]
+lsst_scale = 3.11e9 / load_truth_catalog().query("i < 25.3").shape[0]
 # the euclid ratio is A_euclid_overlap / A_LSST
 euclid_ratio = 8_000 / 18_000  # overlap area from arXiv:2108.01201
 # same for roman
@@ -66,6 +66,10 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
             roman_purity = purity
             roman_completeness = completeness
             roman_size = roman_ratio * size
+        elif "perfect" in file.stem:
+            perfect_purity = purity
+            perfect_completeness = completeness
+            perfect_size = size
         else:
             year = int(file.stem[5:])
             purity_dict[year] = purity
@@ -76,10 +80,12 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
     purity_dict = dict(sorted(purity_dict.items()))
     purity_dict["euclid"] = euclid_purity
     purity_dict["roman"] = roman_purity
+    purity_dict["perfect"] = perfect_purity
 
     completeness_dict = dict(sorted(completeness_dict.items()))
     completeness_dict["euclid"] = euclid_completeness
     completeness_dict["roman"] = roman_completeness
+    completeness_dict["perfect"] = perfect_completeness
 
     size_dict = dict(sorted(size_dict.items()))
     size_dict["euclid"] = euclid_size
@@ -87,6 +93,7 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
     size_dict["Y10+euclid+roman"] = (
         (1 - euclid_ratio - roman_ratio) * size_dict[10] + euclid_size + roman_size
     )
+    size_dict["perfect"] = perfect_size
 
     # package all the metrics in a single dictionary
     metrics = {

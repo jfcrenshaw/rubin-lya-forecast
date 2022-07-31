@@ -241,7 +241,8 @@ Then, in Section \ref{sec:correlations}, we calculate auto- and cross-correlatio
 \label{sec:snr}
 
 In this section, we simulate Rubin, Euclid, and Roman observations to calibrate the expected SNR of the photometric \lya signal for individual galaxies.
-We will not simulate variations in the \lya signal due to large scale structure, because these variations are subdominant to the uncertainties in estimating $\du$, and will therefore not impact our signal-to-noise estimate in this section.
+Our goal is to measure the \lya signal from its impact on the Rubin $u$ band.
+We do not simulate the impact on higher wavelength bands (see discussion below), nor do we simulate variations due to large scale structure, because these variations are subdominant to the uncertainties in estimating $\du$, and will therefore not impact our signal-to-noise estimate in this section.
 For an estimate of the SNR on measurements of \lya variations due to large scale structure, see Section \ref{sec:correlations}.
 
 \subsection{The simulated catalog}
@@ -253,8 +254,8 @@ This constitutes the truth catalog.
 We reserve $100\,000$ randomly selected galaxies for training the inference model (see Section \ref{sec:photo-z}), and use the remaining $600\,000$ to simulate observed catalogs.
 
 Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
-We will use the variable $m$ to refer to the vector of all other intrinsic magnitudes, and the variable $m_\alpha$ to refer to their values including \lya extinction.
-Depending on the context, $m$/$m_\alpha$ might refer to only the LSST $grizy$ bands, or might include the Euclid $YJH$ or Roman $YJHF$ bands.
+We will use the variable $m$ to refer to the vector of all other true magnitudes.
+Depending on the context, $m$ might refer to only the LSST $grizy$ bands, or might include the Euclid $YJH$ or Roman $YJHF$ bands.
 
 To simulate an observed catalog, we add \lya decrements according to the model in Section \ref{sec:decrements}.
 We then simulate photometric errors according to the \citet{ivezic2019} error model, including the low SNR generalization presented in \citet{pzflow} and the extension to Euclid and Roman presented in \citet{graham2020}.
@@ -262,7 +263,9 @@ We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}_\alp
 Finally, we cut galaxies that have negative fluxes in any bands and apply a cut of SNR > 5 in the $i$ band.
 
 The photometric errors are a function of survey depth, which increases with observing time.
-As such, we simulate errors for LSST survey durations from 1-10 years to study how the SNR changes over time.
+As such, we simulate errors for LSST survey durations from 1-10 years to study how the SNR changes over time, and propagate this impact throughout the whole analysis.
+In addition, we perform the analysis using a ``perfect'' catalog, consisting of LSST plus Roman bands with zero photometric error.
+This perfect catalog represents the upper limit on the SNR of this kind of analysis, due to inherent uncertainty in photo-z estimation and predicting $u$ band magnitudes, even with perfect photometry.
 
 \subsection{Selecting the high-redshift sample}
 \label{sec:photo-z}
@@ -282,21 +285,21 @@ As such, we simulate errors for LSST survey durations from 1-10 years to study h
     \end{centering}
 \end{figure}
 
-We train an ensemble of 10 normalizing flows using PZFlow \citep{pzflow} to model the conditional distribution $p(z, u | m_\alpha)$.
+We train an ensemble of 10 normalizing flows using PZFlow \citep{pzflow} to model the conditional distribution $p(z, u | m)$.
 We train the flows on $100\,000$ randomly selected galaxies from the truth catalog.
-We add the expected decrements to the $g$ band (see Figure \ref{fig:decrements}), so that the training set is representative of $\{z, u m_\alpha\}$.
+We add the expected decrements to the $g$ band (see Figure \ref{fig:decrements}), so that the training set is representative of $\{z, u m\}$.
 For more details about training the flows, see Appendix \ref{app:training}.
 
 With the trained model, we wish to select galaxies at $z > 2.36$ whose $u$ bands are maximally impacted by \lya scattering.
 We select this sample with the following photometric redshift (photo-z) cut:
 \begin{align}
-    \int_{2.36}^\infty dz ~ p(z|\hat{m}_\alpha) > 0.95.
+    \int_{2.36}^\infty dz ~ p(z|\hat{m}) > 0.95.
     \label{eq:redshift-cut}
 \end{align}
 That is, we select those galaxies whose redshift posteriors indicate a greater than 95\% probability of being above redshift 2.36.
 We can efficiently compute the integral in Equation \ref{eq:redshift-cut} by sampling
 \begin{align}
-    _{i=1}^{~~ M} \{ m_\alpha^i \, | \, m_\alpha^i \sim p(m_\alpha | \hat{m}_\alpha) \},
+    _{i=1}^{~~ M} \{ m^i \, | \, m^i \sim p(m | \hat{m}) \},
 \end{align}
 from the photometric error model for each galaxy (which is just a Gaussian in flux space), followed by sampling
 \begin{align}
@@ -323,7 +326,7 @@ Multiplying this by $18\,000 \deg^2$ of survey area yields a catalog of 3 billio
 Scaling our truth catalog to the same number provides an estimate for the size of our samples in the real LSST catalog.
 Our sample is projected to contain \variable{output/bg_size_y1.txt} million galaxies at year 1, and \variable{output/bg_size_y10.txt} million galaxies by year 10.
 Adding the NIR data, and assuming $8000\deg^2$ overlap with Euclid and $2200\deg^2$ overlap with Roman, the sample grows to \variable{output/bg_size_y10+euclid+roman.txt} million galaxies.
-Despite the low completeness, we still have very large galaxy samples due to the immense size of the LSST catalog.
+Despite low completeness, we still have very large galaxy samples due to the immense size of the LSST catalog.
 
 \subsection{Inference on $\du$}
 
@@ -332,7 +335,7 @@ This amounts to using the observed $grizy$ magnitudes to predict $u$, and compar
 
 The likelihood for the decrement of each galaxy can be calculated:
 \begin{align}
-    \mathcal{L}(\du) = \int du \, p(\hat{u}_\alpha | u, \du) \, p(u | \hat{m}_\alpha, z > 2.36).
+    \mathcal{L}(\du) = \int du \, p(\hat{u}_\alpha | u, \du) \, p(u | \hat{m}, z > 2.36).
 \end{align}
 This integral can be efficiently computed via reusing the samples from Equation \ref{eq:samples}.
 For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)} < 2.36$, generating a set of samples 
@@ -340,8 +343,25 @@ For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)}
     {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ u^{(i,\, j)} | z^{(i,\, j)} > 2.36\}
 \end{align}
 for each galaxy.
-We can then directly calculate $p(\hat{u}_\alpha | u, \du) = p(\hat{u}_\alpha | u_\alpha = u + \du)$ using the photometric error model.
+We can then directly calculate $p(\hat{u}_\alpha | u, \du) = p(\hat{u}_\alpha | u_\alpha = u + \du)$ using the photometric error model\footnote{\note{I need to note how this is slightly different for the perfect catalog.}}.
 Averaging over the samples $\{ u^{(i,\, j)} \}$ yields the likelihood $\mathcal{L}(\du)$.
+
+\begin{figure}
+    \script{plot_sigma_du.py}
+    \begin{centering}
+        \includegraphics{figures/sigma_du.pdf}
+        \caption{
+            \note{Write this!}
+        }
+        \label{fig:sigma_du}
+    \end{centering}
+\end{figure}
+
+Once we have a likelihood for each galaxy in the sample, we construct a joint likelihood by taking the product of the individual likelihoods\footnote{A small number of the likelihoods were very noisy -- we removed these from the analysis.}.
+We calculate the variance of the joint likelihood and multiply by the square root of the number of galaxies in the sample.
+This provides an estimate of the effective Gaussian uncertainty per galaxy, $\sigma_{\Delta u}$.
+The effective uncertainty per galaxy is plotted as a function of survey duration in Figure \ref{fig:sigma_du}.
+
 
 You can see likelihoods for three example galaxies in Figure \note{N}.
 \note{
@@ -489,6 +509,8 @@ where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample
 
 \section{Discussion}
 \label{sec:discussion}
+
+Mention how we need to understand the selection function, because we will naturally observe galaxies that are brighter than normal, which will dilute the $\du$ signal.
 
 \section{Conclusion}
 \label{sec:conclusion}

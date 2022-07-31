@@ -9,7 +9,7 @@ import optax
 from pzflow import FlowEnsemble
 from pzflow.bijectors import Chain, RollingSplineCoupling, ShiftBounds
 from showyourwork.paths import user as Paths
-from utils import load_truth_catalog, lya_decrement
+from utils import load_truth_catalog
 
 # instantiate the paths
 paths = Paths()
@@ -21,10 +21,6 @@ truth_catalog = load_truth_catalog()
 train_size = 100_000
 test_size = 20_000
 sample = truth_catalog.sample(train_size + test_size, random_state=0)
-
-# add Lya decrements to the g band
-dg = lya_decrement(sample.redshift, "g", 0)
-sample.loc["g"] = sample.g + dg
 
 # split off the train and test sets
 train_set = sample.iloc[:train_size].copy()

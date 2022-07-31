@@ -15,6 +15,7 @@ flow_ensembles = {
     "lsst": FlowEnsemble(file=model_dir / "lsst_ensemble.pzflow.pkl"),
     "lsst+euclid": FlowEnsemble(file=model_dir / "lsst+euclid_ensemble.pzflow.pkl"),
     "lsst+roman": FlowEnsemble(file=model_dir / "lsst+roman_ensemble.pzflow.pkl"),
+    "perfect": FlowEnsemble(file=model_dir / "lsst+roman_ensemble.pzflow.pkl"),
 }
 
 # directory where the observed catalogs are saved
@@ -39,6 +40,8 @@ for file in catalog_dir.glob("*.pkl"):
         ensemble = flow_ensembles["lsst+euclid"]
     elif "roman" in file.stem:
         ensemble = flow_ensembles["lsst+roman"]
+    elif "perfect" in file.stem:
+        ensemble = flow_ensembles["perfect"]
     else:
         ensemble = flow_ensembles["lsst"]
 

@@ -7,12 +7,14 @@ from pzflow import FlowEnsemble
 
 # set the number of samples for inference
 m_samples = 100
-zu_samples = 5
+zu_samples = 1
 
 
 def sample_with_errors(
     catalog: pd.DataFrame,
     ensemble: FlowEnsemble,
+    m_samples: int = m_samples,
+    zu_samples: int = zu_samples,
     seed: int = 0,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Sample from the ensemble while sampling from the photometric errors.
@@ -23,6 +25,10 @@ def sample_with_errors(
         The catalog on which to condition the samples.
     ensemble: FlowEnsemble
         The PZFlow FlowEnsemble to sample from.
+    m_samples: int
+        The number of samples from the photometric error distribution.
+    zu_samples: int
+        The number of samples from p(z, u | m).
     seed: int
         The random seed for samples.
 
@@ -49,7 +55,7 @@ def sample_with_errors(
 
     # add a flux floor to avoid infinite magnitudes
     # this flux corresponds to a max magnitude of 30
-    fluxes = np.clip(fluxes, 1e-12, None)
+    fluxes = np.clip(fluxes, 1e-20, None)
 
     # convert back to magnitudes
     mags = -2.5 * np.log10(fluxes)

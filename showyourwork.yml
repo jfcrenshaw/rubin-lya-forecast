@@ -15,3 +15,6 @@ dependencies:
     - src/data/photoz_metrics_bg.pkl
     - src/data/photoz_metrics_fg.pkl
     - src/scripts/utils/plot_metric.py
+  src/scripts/plot_sigma_du.py:
+    - src/data/sigma_du.pkl
+    - src/scripts/utils/plot_metric.py

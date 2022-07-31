@@ -35,7 +35,7 @@
 
 
 
-\shorttitle{Modeling Galaxy Catalogues with Normalizing Flows}
+\shorttitle{Photometric Lyman-alpha with Rubin}
 \shortauthors{Crenshaw et al.}
 
 
@@ -349,16 +349,15 @@ This amounts to using the observed $grizy$ magnitudes to predict $u$, and compar
 We estimate $\du$ via reusing the samples from Equation \ref{eq:samples}.
 For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)} < 2.36$, generating a set of samples 
 \begin{align}
-    {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ u^{(i,\, j)} | z^{(i,\, j)} > 2.36\}
+    {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ u^{(i,\, j)} | z^{(i,\, j)} > 2.36\}.
 \end{align}
-for each galaxy.
-For each $u^{(i, j)}$, we generate a sample $u_\alpha \sim p(u_\alpha | \hat{u}_\alpha)$, and take the difference, generating a set of samples
+For each $u^{(i, j)}$, we generate a sample $u_\alpha \sim p(u_\alpha | \hat{u}_\alpha)$, and take the difference to generate a set of samples
 \begin{align}
     {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ \Delta u^{(i,\, j)} | \Delta u^{(i,\, j)} = u_\alpha^{(i,\, j)} - u^{(i,\, j)} \}.
 \end{align}
 We take the mean of these samples as a per-galaxy estimator for the true $\Delta u$.
 
-The standard deviation of these means provides an estimate $\sigma_{\small \du}$, the effective per-galaxy uncertainty on $\Delta u$.
+The standard deviation of these means provides an estimate of $\sigma_{\small \du}$, the effective per-galaxy uncertainty on $\Delta u$.
 We call this the effective uncertainty, because while the uncertainty for each galaxy is non-Gaussian and depends on the signal-to-noise of the galaxy photometry, the uncertainty on $\du$ for a large sample of galaxies scales like $\sigma_{\small \Delta u} / \sqrt{N_\text{gal}}$, where $N_\text{gal}$ is the number of galaxies in the sample.
 
 The effective uncertainty per galaxy is plotted as a function of survey duration in Figure \ref{fig:sigma_du}.
@@ -373,32 +372,16 @@ This is the subject of Section \ref{sec:correlations}.
 
 The \lya Forest traces neutral hydrogen gas in the universe, which in turn traces the large scale structure of the universe.
 We can calculate correlations of the \lya signal with itself and other tracers of the large scale structure to learn about the clustering and behavior of the different components of the universe.
-This also allows us to combine information from many galaxies and boost the relatively modest SNR of the photometric \lya signal for a single galaxy, as well as test for systematic errors that may plague our analysis.
+This also allows us to combine information from many galaxies and boost the poor SNR of the photometric \lya signal for individual galaxies (see Section \ref{sec:snr}), as well as test for systematic errors that may plague our analysis.
 I will first develop the formalism of the photometric \lya tracer, before calculating auto- and cross-correlations in the following subsections.
 
-\lya correlation functions are usually computed in terms of the transmission $F(\lambda)$, which traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line of sight.
-For the rest of this section, we will work in terms of redshift $z$ instead of wavelength $\lambda$. 
-This requires us to make the replacement $d\lambda \to \lambda_\alpha dz$ in our integrals, where $\lambda_\alpha$ is the wavelength of the \lya transition.
-
+\lya correlation functions are usually computed in terms of the transmission $F(\lambda)$, which traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line of sight\footnote{
+    For the rest of this section, we will work in terms of redshift $z$ instead of wavelength $\lambda$, which requires the replacement $d\lambda \to \lambda_\alpha dz$ in our integrals.
+}
 We can write the transmission in terms of fluctuations about the mean: $F(z) = \bar{F}(z) [1 + \delta_F(z)]$.
-Similarly, we can express the shape of each galaxy's continuum SED over the $u$ band in terms of fluctuations about the mean SED: $s(z) = \bar{s(z)}[1 + \delta_s(z)]$.
+Similarly, we can express the shape of each galaxy's continuum SED over the $u$ band in terms of fluctuations about the mean SED: $s(z) = \bar{s}(z)[1 + \delta_s(z)]$.
 Note that the mean $\bar{F}$ is an average over lines-of-sight, while the mean $\bar{s}(z)$ is an average over galaxies in the sample.
 
-Using Equations \ref{eq:F} and \ref{eq:Fbar}, we can calculate fractional variations in the \lya transmission $F$:
-\begin{align}
-    \Delta_F = \frac{F - \bar{F}}{\bar{F}} = \int dz \, W_F(z)[\delta_F(z) + \delta_s(z)],
-\end{align}
-where $W_F(z) \propto R(z) \bar{F}(z) \bar{s}(z)$ is a normalized redshift kernel for the photometric \lya signal.
-$\delta_F$ represents the \lya signal, while $\delta_s$ represents noise from galaxy-to-galaxy variations of the continuum SED.
-The noise $\delta_s$ should not correlate with the signal \note{[?]}, and we will assume that the continuum SED can be estimated well enough that this term will be subdominant.
-Thus, we have the tracer
-\begin{align}
-    \Delta_F = \int dz \, W_F(z) \delta_F(z).
-    \label{eq:lya-tracer}
-\end{align}
-
-Equation \ref{eq:lya-tracer} is the photometric \lya tracer.
-We see that it is a projection of variations in the \lya transmission field, $\delta_F(z)$, weighted by the kernel $W_F(z)$.
 In Fourier space, 
 \begin{align}
     \delta_F(\textbf{k}) = b_F (1 + \mu_\textbf{k}^2 \beta_F) \delta_b(\textbf{k}),
@@ -407,7 +390,25 @@ In Fourier space,
 where $b_F \approx -0.13$ is the linear bias of the \lya field, $\beta_F \approx 1.5$ measures the strength of redshift-space distortions (RSD)\footnote{Unlike the galaxy tracer (c.f. Equation \ref{eq:galaxy-tracer}), $\beta$ is another free parameter. \note{This has to do with the nonlinear transformation applied to the optical depth? I need to work on understanding this.}}, $\mu_\textbf{k}$ is the cosine between the mode $\textbf{k}$ and the line of sight, and $\delta_b(\textbf{k})$ are the Fourier space fluctuations of the baryon density field \needscite.
 Note that the bias is negative as more neutral hydrogen corresponds to less transmitted flux.
 
-The bias and RSD make this tracer look like the projected galaxy density tracer (c.f. Equation \ref{eq:galaxy-tracer}), but similar to gravitational lensing tracers (c.f. Section \note{N}), it is sensitive to density integrated over the lines-of-sight to background sources.
+Using Equation \ref{eq:F}, we can calculate fractional variations in the photometric transmission $F$:
+\begin{align}
+    \Delta_F = \frac{F - \bar{F}}{\bar{F}} = \int dz \, W_F(z)[\delta_F(z) + \delta_s(z)],
+\end{align}
+where $W_F(z) \propto R(z) \bar{F}(z) \bar{s}(z)$ is the normalized redshift kernel for the photometric \lya signal.
+$\delta_F$ represents the \lya signal, while $\delta_s$ represents noise from galaxy-to-galaxy variations of the continuum SED.
+The noise $\delta_s$ should not correlate with the signal, and variations in the continuum SED lead to only small variations in the signal (c.f. Figure \ref{fig:decrements}).
+We will assume that the continuum SED can be estimated well enough that this term will be subdominant.
+Thus, we have the tracer
+\begin{align}
+    \Delta_F = \int dz \, W_F(z) \delta_F(z).
+    \label{eq:lya-tracer}
+\end{align}
+
+Equation \ref{eq:lya-tracer} is the photometric \lya tracer.
+We see that it is a projection of variations in the \lya transmission field, $\delta_F(z)$, weighted by the kernel $W_F(z)$.
+The bias and RSD in Equation \ref{eq:fourier-tracer} make this tracer look like the projected galaxy density tracer (c.f. Equation \ref{eq:galaxy-tracer}).
+However, similar to gravitational lensing (c.f. Section \note{N}), the photometric \lya tracer is sensitive to mass density integrated over lines-of-sight to background sources.
+
 The integral in Equation \ref{eq:lya-tracer} means the photometric tracer is relatively insensitive to the RSD term in Equation \ref{eq:fourier-tracer}.
 This is because the RSD term only contributes to modes along the line of sight (due to the cosine $\mu_\textbf{k}$).
 Modes with wavelength less than the width of the redshift kernel will cancel each other in the integral, and modes longer than the width of the redshift kernel will be indistinguishable from \note{$\bar{F}$ or something to do with $s$?}.
@@ -417,12 +418,11 @@ Modes with wavelength less than the width of the redshift kernel will cancel eac
 }
 
 In the subsections that follow, I calculate different correlations of the photometric \lya signal and forecast the SNR of these measurements as a function of LSST survey duration.
-In every case, correlation functions are calculated using CCL \needscite assuming the Planck cosmology \needscite.
-The SNR calculations involve the expected per-galaxy uncertainty on the photometric \lya transmission, $\bar{\sigma}_{\Delta_F}$, which can be calculated from the expected per-galaxy uncertainty on the $u$ band decrement, $\bar{\sigma}_{\small \du}$:
+In every case, correlation functions are calculated using the DESC Core Cosmology Library (CCL; \citealt{ccl}) assuming the Planck 2018 cosmology \citep{planck2018}.
+The SNR calculations involve the expected per-galaxy uncertainty on the photometric \lya transmission, $\bar{\sigma}_{\Delta_F}$, which can be calculated from per-galaxy uncertainty on $\du$, $\bar{\sigma}_{\small \du}$:
 \begin{align}
-    \bar{\sigma}_{\Delta_F} = \frac{\ln 10}{2.5} \bar{\sigma}_{\small \du} \approx ... 
+    \bar{\sigma}_{\Delta_F} = \frac{\ln 10}{2.5} \bar{\sigma}_{\small \du}.
 \end{align}
-\note{Say something about the logarithmic binning of tracers that applies to every subsection.}
 
 \subsection{Lyman-alpha autocorrelation}
 

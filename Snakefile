@@ -59,19 +59,11 @@ rule calculate_photoz_metrics:
     script:
         "src/scripts/calculate_photoz_metrics.py"
 
-rule calculate_likelihoods:
+rule calculate_sigma_du:
     input:
         directory("src/data/models"),
         directory("src/data/background_catalogs"),
         "src/scripts/utils/sample_with_errors.py"
-    output:
-        "src/data/likelihoods.pkl"
-    script:
-        "src/scripts/calculate_likelihoods.py"
-
-rule calculate_sigma_du:
-    input:
-        "src/data/likelihoods.pkl"
     output:
         "src/data/sigma_du.pkl"
     script:
@@ -93,6 +85,7 @@ rule save_variables:
         "src/tex/output/bg_size_y10.txt",
         "src/tex/output/bg_size_y10+euclid+roman.txt",
         "src/tex/output/m_samples.txt",
-        "src/tex/output/zu_samples.txt"
+        "src/tex/output/zu_samples.txt",
+        "src/tex/output/snr_y10.txt"
     script:
         "src/scripts/save_variables.py"

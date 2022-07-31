@@ -24,17 +24,26 @@ def plot_metric(
     include_perfect: bool, default=False
         Whether to include the metric for the perfect catalog.
     """
+    # pull out the metrics
+    md = metric_dict.copy()
+    euclid_metric = md.pop("euclid", None)
+    roman_metric = md.pop("roman", None)
+    perfect_metric = md.pop("perfect", None)
+    lsst_metrics = dict(sorted(md.items()))
+
     # setup the axis
     lsst_ticks = [1, 5, 10]
     if include_perfect:
         xlim = (0, 17)
         other_ticks = [12.15, 13.9, 16]
         other_labels = ["+Euclid", "+Roman", "Perfect"]
+        other_metrics = [euclid_metric, roman_metric, perfect_metric]
         ax.axvline(15, c="k", lw=1, ls="--")
     else:
         xlim = (0, 15)
         other_ticks = [12.15, 13.9]
         other_labels = ["+Euclid", "+Roman"]
+        other_metrics = [euclid_metric, roman_metric]
     ax.set(
         xlabel="LSST Duration [years]",
         xlim=xlim,
@@ -48,18 +57,11 @@ def plot_metric(
         tick.set_rotation_mode("anchor")
     ax.axvline(11, c="k", lw=1, ls="--")
 
-    # pull out the metrics
-    md = metric_dict.copy()
-    euclid_metric = md.pop("euclid", None)
-    roman_metric = md.pop("roman", None)
-    perfect_metric = md.pop("perfect", None)
-    lsst_metrics = dict(sorted(md.items()))
-
     # plot the metrics
     ax.plot(lsst_metrics.keys(), lsst_metrics.values(), c="C0")
     ax.scatter(
         other_ticks,
-        [euclid_metric, roman_metric, perfect_metric],
+        other_metrics,
         c="C5",
         marker="x",
         lw=1,

@@ -328,56 +328,44 @@ Our sample is projected to contain \variable{output/bg_size_y1.txt} million gala
 Adding the NIR data, and assuming $8000\deg^2$ overlap with Euclid and $2200\deg^2$ overlap with Roman, the sample grows to \variable{output/bg_size_y10+euclid+roman.txt} million galaxies.
 Despite low completeness, we still have very large galaxy samples due to the immense size of the LSST catalog.
 
-\subsection{Inference on $\du$}
-
-Now that we have a sample of galaxies at $z > 2.36$, we can perform inference on the $u$ band decrement $\Delta u$.
-This amounts to using the observed $grizy$ magnitudes to predict $u$, and comparing this predicted value to the observed value, $\hat{u}_\alpha$.
-
-The likelihood for the decrement of each galaxy can be calculated:
-\begin{align}
-    \mathcal{L}(\du) = \int du \, p(\hat{u}_\alpha | u, \du) \, p(u | \hat{m}, z > 2.36).
-\end{align}
-This integral can be efficiently computed via reusing the samples from Equation \ref{eq:samples}.
-For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)} < 2.36$, generating a set of samples 
-\begin{align}
-    {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ u^{(i,\, j)} | z^{(i,\, j)} > 2.36\}
-\end{align}
-for each galaxy.
-We can then directly calculate $p(\hat{u}_\alpha | u, \du) = p(\hat{u}_\alpha | u_\alpha = u + \du)$ using the photometric error model\footnote{\note{I need to note how this is slightly different for the perfect catalog.}}.
-Averaging over the samples $\{ u^{(i,\, j)} \}$ yields the likelihood $\mathcal{L}(\du)$.
+\subsection{Estimating uncertainty on $\du$}
 
 \begin{figure}
     \script{plot_sigma_du.py}
     \begin{centering}
         \includegraphics{figures/sigma_du.pdf}
         \caption{
-            \note{Write this!}
+            The effective per-galaxy uncertainty on $\du$ as a function of survey duration.
+            The expected magnitude of $\du$ can be seen in Figure \ref{fig:decrements}.
+            Even with LSST year 10 the SNR is low, and adding NIR data from Euclid or Roman does not improve the per-galaxy inference.
         }
         \label{fig:sigma_du}
     \end{centering}
 \end{figure}
 
-Once we have a likelihood for each galaxy in the sample, we construct a joint likelihood by taking the product of the individual likelihoods\footnote{A small number of the likelihoods were very noisy -- we removed these from the analysis.}.
-We calculate the variance of the joint likelihood and multiply by the square root of the number of galaxies in the sample.
-This provides an estimate of the effective Gaussian uncertainty per galaxy, $\sigma_{\Delta u}$.
+Now that we have a sample of galaxies at $z > 2.36$, we can perform inference on the $u$ band decrement $\Delta u$.
+This amounts to using the observed $grizy$ magnitudes to predict $u$, and comparing this predicted value to the observed value, $\hat{u}_\alpha$.
+
+We estimate $\du$ via reusing the samples from Equation \ref{eq:samples}.
+For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)} < 2.36$, generating a set of samples 
+\begin{align}
+    {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ u^{(i,\, j)} | z^{(i,\, j)} > 2.36\}
+\end{align}
+for each galaxy.
+For each $u^{(i, j)}$, we generate a sample $u_\alpha \sim p(u_\alpha | \hat{u}_\alpha)$, and take the difference, generating a set of samples
+\begin{align}
+    {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ \Delta u^{(i,\, j)} | \Delta u^{(i,\, j)} = u_\alpha^{(i,\, j)} - u^{(i,\, j)} \}.
+\end{align}
+We take the mean of these samples as a per-galaxy estimator for the true $\Delta u$.
+
+The standard deviation of these means provides an estimate $\sigma_{\small \du}$, the effective per-galaxy uncertainty on $\Delta u$.
+We call this the effective uncertainty, because while the uncertainty for each galaxy is non-Gaussian and depends on the signal-to-noise of the galaxy photometry, the uncertainty on $\du$ for a large sample of galaxies scales like $\sigma_{\small \Delta u} / \sqrt{N_\text{gal}}$, where $N_\text{gal}$ is the number of galaxies in the sample.
+
 The effective uncertainty per galaxy is plotted as a function of survey duration in Figure \ref{fig:sigma_du}.
-
-
-You can see likelihoods for three example galaxies in Figure \note{N}.
-\note{
-    Note how they are non-Gaussian, and try to include one that has a large tail due to low signal to noise.
-    Note that the likelihoods span to negative decrements - so you can't even tell if the galaxy actually did get dimmer - it may be brighter!
-}
-
-\note{
-    When combining many likelihoods, the variance scales like $\bar{\sigma}_{\small \du}^2 / N$, where $\bar{\sigma}_{\small \du}$ is the effective Gaussian error per galaxy.
-    Note that the effective SNR for a single galaxy is $\sim 1$.
-    This isn't great SNR, but in the next section we will calculate correlation functions that have much greater SNRs.
-}
-
-\note{
-    Plot the effective error as a function of LSST year!
-}
+Even with LSST year 10, the SNR for individual galaxies is \variable{output/snr_y10.txt} (c.f. Figure \ref{fig:decrements}).
+Additionally, NIR data from Euclid or Roman does not improve $u$ band predictions.
+Evidently, we have little hope of measuring this effect for individual galaxies, however by leveraging the large sample size provided by LSST we may be able to detect the signal in aggregate by calculating correlation functions.
+This is the subject of Section \ref{sec:correlations}.
 
 
 \section{Auto- and cross-correlations of the Lyman-alpha signal}

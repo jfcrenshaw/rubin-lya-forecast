@@ -69,6 +69,16 @@ rule calculate_sigma_du:
     script:
         "src/scripts/calculate_sigma_du.py"
 
+rule calculate_correlations:
+    input:
+        "src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat",
+        "src/scripts/utils/load_truth_catalog.py",
+        "src/scripts/utils/build_tracer.py",
+    output:
+        "src/data/correlations.pkl"
+    script:
+        "src/scripts/calculate_correlations.py"
+
 rule save_variables:
     input:
         "src/scripts/utils/sample_with_errors.py",

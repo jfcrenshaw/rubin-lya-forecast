@@ -1,3 +1,4 @@
+from .build_tracer import build_tracer
 from .calculate_extinction import *
 from .load_truth_catalog import load_truth_catalog
 from .plot_metric import plot_metric

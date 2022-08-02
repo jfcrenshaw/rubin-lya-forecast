@@ -52,7 +52,8 @@ rule calculate_photoz_metrics:
     input:
         directory("src/data/observed_catalogs"),
         directory("src/data/background_catalogs"),
-        directory("src/data/foreground_catalogs")
+        directory("src/data/foreground_catalogs"),
+        "src/scripts/utils/survey_areas.py"
     output:
         "src/data/photoz_metrics_bg.pkl",
         "src/data/photoz_metrics_fg.pkl"
@@ -79,6 +80,15 @@ rule calculate_correlations:
     script:
         "src/scripts/calculate_correlations.py"
 
+rule calculate_correlation_snr:
+    input:
+        "src/data/correlations.pkl",
+        "src/scripts/utils/survey_areas.py"
+    output:
+        "src/data/correlation_snr.pkl"
+    script:
+        "src/scripts/calculate_correlation_snr.py"
+
 rule save_variables:
     input:
         "src/scripts/utils/sample_with_errors.py",
@@ -94,8 +104,19 @@ rule save_variables:
         "src/tex/output/bg_size_y1.txt",
         "src/tex/output/bg_size_y10.txt",
         "src/tex/output/bg_size_y10+euclid+roman.txt",
+        "src/tex/output/fg_size_y1.txt",
+        "src/tex/output/fg_size_y10.txt",
+        "src/tex/output/fg_size_y10+euclid+roman.txt",
         "src/tex/output/m_samples.txt",
         "src/tex/output/zu_samples.txt",
-        "src/tex/output/snr_y10.txt"
+        "src/tex/output/snr_y10.txt",
+        "src/tex/output/snr_wff_y1.txt",
+        "src/tex/output/snr_wff_y10.txt",
+        "src/tex/output/snr_wff_y10+euclid+roman.txt",
+        "src/tex/output/snr_wfg_y1.txt",
+        "src/tex/output/snr_wfg_y10.txt",
+        "src/tex/output/snr_wfg_y10+euclid+roman.txt",
+        "src/tex/output/euclid_overlap.txt",
+        "src/tex/output/roman_overlap.txt"
     script:
         "src/scripts/save_variables.py"

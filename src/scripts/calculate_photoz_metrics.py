@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from showyourwork.paths import user as Paths
 from utils import load_truth_catalog
+from utils.survey_areas import A_RATIO_EUCLID, A_RATIO_ROMAN
 
 # instantiate the paths
 paths = Paths()
@@ -16,13 +17,9 @@ catalog_dir = paths.data / "observed_catalogs"
 bg_dir = paths.data / "background_catalogs"
 fg_dir = paths.data / "foreground_catalogs"
 
-# define scaling variables for calculating projected sample size
+# define scaling variable for calculating projected sample size
 # the lsst_scale scales sim's gold sample -> projected lsst gold sample
 lsst_scale = 3.11e9 / load_truth_catalog().query("i < 25.3").shape[0]
-# the euclid ratio is A_euclid_overlap / A_LSST
-euclid_ratio = 8_000 / 18_000  # overlap area from arXiv:2108.01201
-# same for roman
-roman_ratio = 2_200 / 18_000  # overlap area from arXiv:1503.03757
 
 
 def calculate_metrics(dir: PosixPath, query: str) -> dict:
@@ -61,11 +58,11 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
         if "euclid" in file.stem:
             euclid_purity = purity
             euclid_completeness = completeness
-            euclid_size = euclid_ratio * size
+            euclid_size = A_RATIO_EUCLID * size
         elif "roman" in file.stem:
             roman_purity = purity
             roman_completeness = completeness
-            roman_size = roman_ratio * size
+            roman_size = A_RATIO_ROMAN * size
         elif "perfect" in file.stem:
             perfect_purity = purity
             perfect_completeness = completeness
@@ -91,7 +88,7 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
     size_dict["euclid"] = euclid_size
     size_dict["roman"] = roman_size
     size_dict["Y10+euclid+roman"] = (
-        (1 - euclid_ratio - roman_ratio) * size_dict[10] + euclid_size + roman_size
+        (1 - A_RATIO_EUCLID - A_RATIO_ROMAN) * size_dict[10] + euclid_size + roman_size
     )
     size_dict["perfect"] = perfect_size
 

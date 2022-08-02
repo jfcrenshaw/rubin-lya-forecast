@@ -20,3 +20,5 @@ dependencies:
     - src/scripts/utils/plot_metric.py
   src/scripts/plot_correlations.py:
     - src/data/correlations.pkl
+  src/scripts/plot_correlation_snr.py:
+    - src/data/correlation_snr.pkl

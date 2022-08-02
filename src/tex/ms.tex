@@ -351,14 +351,12 @@ For the galaxies in the high-redshift sample, we reject samples with $z^{(i, j)}
 \begin{align}
     {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ u^{(i,\, j)} | z^{(i,\, j)} > 2.36\}.
 \end{align}
-For each $u^{(i, j)}$, we generate a sample $u_\alpha \sim p(u_\alpha | \hat{u}_\alpha)$, and take the difference to generate a set of samples
+For each $u^{(i, j)}$, we generate a sample $u_\alpha \sim p(u_\alpha | \hat{u}_\alpha)$ from the photometric error model, and take the difference to generate a set of samples
 \begin{align}
     {}_{i=1}^{~~ M} {}_{j=1}^{~~ N} \{ \Delta u^{(i,\, j)} | \Delta u^{(i,\, j)} = u_\alpha^{(i,\, j)} - u^{(i,\, j)} \}.
 \end{align}
 We take the mean of these samples as a per-galaxy estimator for the true $\Delta u$.
-
 The standard deviation of these means provides an estimate of $\sigma_{\small \du}$, the effective per-galaxy uncertainty on $\Delta u$.
-We call this the effective uncertainty, because while the uncertainty for each galaxy is non-Gaussian and depends on the signal-to-noise of the galaxy photometry, the uncertainty on $\du$ for a large sample of galaxies scales like $\sigma_{\small \Delta u} / \sqrt{N_\text{gal}}$, where $N_\text{gal}$ is the number of galaxies in the sample.
 
 The effective uncertainty per galaxy is plotted as a function of survey duration in Figure \ref{fig:sigma_du}.
 Even with LSST year 10, the SNR for individual galaxies is \variable{output/snr_y10.txt} (c.f. Figure \ref{fig:decrements}).
@@ -369,6 +367,37 @@ This is the subject of Section \ref{sec:correlations}.
 
 \section{Auto- and cross-correlations of the Lyman-alpha signal}
 \label{sec:correlations}
+
+\begin{figure*}
+    \script{plot_correlations.py}
+    \begin{centering}
+        \includegraphics{figures/correlations.pdf}
+        \caption{
+            Power spectra (left) and correlation functions (right) of the photometric \lya tracer.
+            The curves labeled $FF$ represent \lya autocorrelation; the curves labeled $Fg$ represent the cross correlation of the \lya with the positions of foreground tracer galaxies.
+            \note{
+                Ask Anze about why the $FF$ spectrum trends upwards on large scales.
+                Based on experiments, it seems tied to RSD.
+                I.e. if RSD=0, this goes away.
+                Also the $gg$ spectrum currently exists for my reference, but I will probably remove from the final paper.
+            }
+        }
+        \label{fig:correlations}
+    \end{centering}
+\end{figure*}
+
+\begin{figure}
+    \script{plot_correlation_snr.py}
+    \begin{centering}
+        \includegraphics{figures/correlation_snr.pdf}
+        \caption{
+            \note{
+                Write this!
+            }
+        }
+        \label{fig:correlation_snr}
+    \end{centering}
+\end{figure}
 
 The \lya Forest traces neutral hydrogen gas in the universe, which in turn traces the large scale structure of the universe.
 We can calculate correlations of the \lya signal with itself and other tracers of the large scale structure to learn about the clustering and behavior of the different components of the universe.
@@ -407,43 +436,62 @@ Thus, we have the tracer
 Equation \ref{eq:lya-tracer} is the photometric \lya tracer.
 We see that it is a projection of variations in the \lya transmission field, $\delta_F(z)$, weighted by the kernel $W_F(z)$.
 The bias and RSD in Equation \ref{eq:fourier-tracer} make this tracer look like the projected galaxy density tracer (c.f. Equation \ref{eq:galaxy-tracer}).
-However, similar to gravitational lensing (c.f. Section \note{N}), the photometric \lya tracer is sensitive to mass density integrated over lines-of-sight to background sources.
-
-The integral in Equation \ref{eq:lya-tracer} means the photometric tracer is relatively insensitive to the RSD term in Equation \ref{eq:fourier-tracer}.
-This is because the RSD term only contributes to modes along the line of sight (due to the cosine $\mu_\textbf{k}$).
-Modes with wavelength less than the width of the redshift kernel will cancel each other in the integral, and modes longer than the width of the redshift kernel will be indistinguishable from \note{$\bar{F}$ or something to do with $s$?}.
-\note{
-    I should test if the correlations are relatively independent of $\beta$!
-    I should really have Anze confirm this part.    
-}
+However, similar to gravitational lensing (c.f. Section \ref{sec:wFL}), the photometric \lya tracer is sensitive to mass density integrated over lines-of-sight to background sources.
 
 In the subsections that follow, I calculate different correlations of the photometric \lya signal and forecast the SNR of these measurements as a function of LSST survey duration.
 In every case, correlation functions are calculated using the DESC Core Cosmology Library (CCL; \citealt{ccl}) assuming the Planck 2018 cosmology \citep{planck2018}.
 The SNR calculations involve the expected per-galaxy uncertainty on the photometric \lya transmission, $\bar{\sigma}_{\Delta_F}$, which can be calculated from per-galaxy uncertainty on $\du$, $\bar{\sigma}_{\small \du}$:
 \begin{align}
-    \bar{\sigma}_{\Delta_F} = \frac{\ln 10}{2.5} \bar{\sigma}_{\small \du}.
+    \sigma_{\Delta_F} = \frac{\ln 10}{2.5} \, \sigma_{\small \du}.
 \end{align}
 
 \subsection{Lyman-alpha autocorrelation}
+\label{sec:wFF}
 
-\begin{figure*}
-    \script{plot_correlations.py}
-    \begin{centering}
-        \includegraphics{figures/correlations.pdf}
-        \caption{
-            \note{Write this!}
-        }
-        \label{fig:correlations}
-    \end{centering}
-\end{figure*}
+The autocorrelation of the \lya signal in our high redshift sample provides a direct probe of the clustering of neutral hydrogen gas in the redshift range $1.63 < z < 2.36$.
+The forecasted angular correlation function, $w_{\small FF}(\theta)$, is plotted in Figure \ref{fig:correlations}.
 
-\note{
-    Write this after I actually perform the calculation. 
-    Explain the counting of pairs.
-    Don't forget to add the factor of 1/2 to account for double counting.
-}
+We wish to estimate the SNR on the amplitude of this function.
+We can estimate this by constructing angular separation bins, and calculating
+\begin{align}
+    \mathrm{SNR}(w_{\small FF}) = \sqrt{
+        \sum_{\theta ~ \text{bins}} \frac{w_{\small FF}^2}{~\sigma_{\Delta_F}^2 \, / \, N_\text{pairs}~}
+    },
+\end{align}
+where $N_\text{pairs}$ is the number of galaxies in the sample whose angular separation falls in the given angular bin.
+We can estimate $N_\text{pairs}$ for an angular separation bin by focusing on a single galaxy, and counting the number of galaxies that lie within the corresponding annulus around that galaxy:
+\begin{align}
+    N_\text{an} = A_\text{an} \, \frac{N_\text{bg}}{A_\text{LSST}},
+\end{align}
+where $A_\text{an} = 2 \pi [ \cos\theta_0 - \cos(\theta_0 + \Delta\theta) ]$ is the area of the annulus.
+We have a similar annulus for every galaxy in the sample, so the number of pairs is 
+\begin{align}
+    N_\text{pairs} = \frac{1}{2} \, N_\text{bg} \, N_\text{an},
+\end{align}
+where the factor of $1/2$ corrects for double counting each galaxy in a pair\footnote{This counting scheme ignores edge effects.}.
+
+The SNR as a function of survey duration is plotted in the first panel of Figure \ref{fig:correlation_snr}.
+At year one, the SNR is \variable{output/snr_wff_y1.txt}, rising to only \variable{output/snr_wff_y10.txt} by year 10.
+As such, the Rubin observatory alone is unlikely to provide a strong measurement of the \lya autocorrelation.
+
+We consider the inclusion of NIR photometry by assuming that Euclid has $8000\deg^2$ with LSST, and Roman has $2200\deg^2$ with LSST.
+We then calculate a weighted effective uncertainty per galaxy:
+\begin{align}
+    \sigma_{\Delta_F}^{\small \text{+NIR}} = \left[ 
+        \frac{1}{N_\text{bg}} \sum_{i=1}^{N_\text{bg}} \sigma_{{\small \Delta_F}, i}^{-2}
+    \right]^{-1/2}.
+\end{align}
+For the LSST Y10 + Euclid catalog, \variable{output/euclid_overlap.txt}\% of the galaxies have Euclid photometry, and thus have a lower per-galaxy uncertainty, $\sigma_{\Delta_F}$.
+Similarly, for the LSST Y10 + Roman catalog, \variable{output/roman_overlap.txt}\% of galaxies have Roman photometry and therefore lower per-galxay uncertainty.
+The LSST Y10 + Both catalog assumes that Euclid and Roman have no overlap\footnote{This scheme also assumes that the galaxies with Euclid and Roman photometry are uniformly distributed throughout the survey area, which is obviously not the case.}.
+
+The resulting SNR for these catalogs is also visible in Figure \ref{fig:correlation_snr}.
+Adding NIR photometry from both Euclid and Roman boosts the SNR on the autocorrelation to \variable{output/snr_wff_y10+euclid+roman.txt}.
+Clever weighting of the galaxy sample may boost the SNR by a few, however, it appears that Rubin plus Euclid and Roman will be able to measure the \lya autocorrelation at the 20\% level.
+
 
 \subsection{Correlation with galaxy clustering}
+\label{sec:wFg}
 
 \begin{figure}[t!]
     \script{plot_photoz_metrics.py}
@@ -467,7 +515,9 @@ This selection can be performed in an identical manner to the photo-z selection 
     \int_{1.63}^{2.36} dz ~ p(z|\hat{m}, \sigma_m) > 0.95.
 \end{align}
 Again, this cut yields a high-purity but low-completeness sample.
-The purity, completeness, and projected size of the foreground sample can be seen as a function of LSST survey duration in Figure \note{N}.
+The purity and completeness of the foreground sample can be seen as a function of LSST survey duration in Figure \ref{fig:photoz_metrics_fg}.
+
+Using the same size projections as Section \ref{sec:photo-z}, we expect the foreground sample to contain \variable{output/fg_size_y1.txt} million galaxies at year 1, \variable{output/fg_size_y10.txt} million galaxies at year 10, and \variable{output/fg_size_y10+euclid+roman.txt} million galaxies after the inclusion of Euclid and Roman photometry.
 
 The tracer for the foreground galaxies can be written:
 \begin{align}
@@ -479,37 +529,47 @@ There is a corresponding projected galaxy tracer
 \begin{align}
     \Delta_g = \int dz \, W_g(z) \, \delta_g(z),
 \end{align}
-where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample\footnote{This distribution is typically written as $n(z)$, but I write it as $W_g(z)$ here to unify the notation with the redshift kernels of the other tracers considered in this section.}
+where $W_g(z)$ is the redshift distribution of galaxies in the foreground sample\footnote{This distribution is typically written as $n(z)$, but I write it as $W_g(z)$ here to unify the notation with the redshift kernels of the other tracers considered in this section.}.
+The forecasted angular correlation function, $w_{\small Fg}(\theta)$, is plotted in Figure \ref{fig:correlations}.
 
-\note{Plot the correlations.}
+We estimate the SNR using the same scheme as we used for the autocorrelation above, except the number of galaxy pairs per angular separation bin is now 
+\begin{align}
+    N_\text{pairs} = N_\text{fg} \, N_\text{an},
+\end{align}
+where $N_\text{fg}$ is the total number of foreground galaxies.
+The SNR as a function of survey duration is plotted in the second panel of Figure \ref{fig:correlation_snr}.
+At year one, the SNR is only \variable{output/snr_wfg_y1.txt}, but rises to \variable{output/snr_wfg_y10.txt} by year 10.
+Including NIR photometry from Euclid and Roman further boosts the SNR to \variable{output/snr_wfg_y10+euclid+roman.txt}.
 
-\note{Give the pair counting that yields the SNR estimate.}
+The amplitude of this cross-correlation is the product of the amplitude of galaxy clustering and the amplitude of the \lya correlation function.
+Assuming the amplitude of galaxy clustering is well constrained (e.g. by the LSST 3x2pt analysis \citealt{descSRD}), then LSST will be able to provide strong constraints on the amplitude of the \lya correlation function.
 
 
-\subsection{Correlation with lensing magnification}
+\subsection{Correlation with lensing}
+\label{sec:wFL}
 
 \note{
-    Need to ask Marilena/Anze about whether I should use the lensing magnification signal in the number density or in the magnitude increase.
-    If doing the latter, I should use $i$ band, as this will be the highest SNR band in my catalog.
+    I think we do not want to use correlation with shear, because we are working with a high-redshift, low SNR sample.
+    Many of these galaxies will be rejected by the 3x2pt analysis, so that probably means measuring shapes for these galaxies is hard.
+    I should ask Anze/Marilena about whether I should use the lensing magnification signal via the number density or the magnitude increase.
 }
 
+
 \subsection{Correlation with dust}
+\label{sec:wFd}
 
 \note{
     Can calculate correlation with galaxy colors as a proxy for dust.
     Anze thinks this will be interesting to CMB people.
+    Look at Marilena's notes in the email she sent me.
+    Eric Gawiser might also be a good person to ask about calculating this signal?
 }
 
-\note{
-    Look at Marilena's notes in the email she sent me.
-    Eric Gawiser might be a good person to ask.
-    Or even Daniel Gruen?
-}
 
 \section{Discussion}
 \label{sec:discussion}
 
-Mention how we need to understand the selection function, because we will naturally observe galaxies that are brighter than normal, which will dilute the $\du$ signal.
+Mention how we need to understand the selection function, because we will naturally observe galaxies that are brighter than normal, which will dilute the $\du$ signal, and bias the analysis towards smaller $\du$.
 
 \section{Conclusion}
 \label{sec:conclusion}

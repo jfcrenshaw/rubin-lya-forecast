@@ -20,6 +20,9 @@ cosmo = ccl.Cosmology(
     n_s=0.9665,
 )
 
+# need to call this to fix a bug in ccl 2.4.0 and 2.5.0
+cosmo.compute_distances()
+
 # setup a redshift grid
 z = np.linspace(0.0, 4.0, 200)
 

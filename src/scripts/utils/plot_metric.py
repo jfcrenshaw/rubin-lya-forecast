@@ -7,7 +7,7 @@ def plot_metric(
     metric_dict: dict,
     ax: plt.Axes,
     xlabel_height: float = -0.3,
-    include_perfect: bool = False,
+    include_both: bool = False,
 ) -> None:
     """Plot the metric as a function of survey duration.
 
@@ -21,24 +21,24 @@ def plot_metric(
         The matplotlib axis on which to plot the data.
     xlabel_height: float, default=-0.3
         The height at which to put the xlabel. Value in the axes coordinate system.
-    include_perfect: bool, default=False
-        Whether to include the metric for the perfect catalog.
+    include_both: bool, default=False
+        Whether to include the metric for the catalog that includes Euclid and Roman.
     """
     # pull out the metrics
     md = metric_dict.copy()
     euclid_metric = md.pop("euclid", None)
     roman_metric = md.pop("roman", None)
+    both_metric = md.pop("Y10+euclid+roman", None)
     perfect_metric = md.pop("perfect", None)
     lsst_metrics = dict(sorted(md.items()))
 
     # setup the axis
     lsst_ticks = [1, 5, 10]
-    if include_perfect:
-        xlim = (0, 17)
-        other_ticks = [12.15, 13.9, 16]
-        other_labels = ["+Euclid", "+Roman", "Perfect"]
-        other_metrics = [euclid_metric, roman_metric, perfect_metric]
-        ax.axvline(15, c="k", lw=1, ls="--")
+    if include_both:
+        xlim = (0, 16.8)
+        other_ticks = [12.15, 13.9, 15.65]
+        other_labels = ["+Euclid", "+Roman", "+Both"]
+        other_metrics = [euclid_metric, roman_metric, both_metric]
     else:
         xlim = (0, 15)
         other_ticks = [12.15, 13.9]

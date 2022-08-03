@@ -44,7 +44,7 @@ for year in [1, 10]:
         mean_errs[year]["g"].append(errs.mean())
 
 # create the figure
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(3.3, 4), dpi=300)
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(3.3, 4), constrained_layout=True)
 
 # plot the redshift distribution at the top
 ax1.hist(gold_sample.redshift, bins=20, density=True, color="C4")

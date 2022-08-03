@@ -42,7 +42,7 @@
 % Begin!
 \begin{document}
 
-\title{Feasibility of Detecting a Photometric Lyman-alpha Signal with the Vera Rubin Observatory}
+\title{Seeing the Forest for the Trees: Feasibility of Detecting a Photometric Lyman-alpha Signal\\with the Vera Rubin Observatory}
 
 \correspondingauthor{John Franklin Crenshaw}
 \email{jfc20@uw.edu}
@@ -131,8 +131,7 @@
 \note{
     What photometric surveys lack in spectral resolution, they make up for in statistics.
     This enables us to do complementary things.
-    We are insensitive to longitudinal modes, but can better constrain the transverse modes.
-    In addition, we can directly measure the mean extinction of the \lya Forest, which is something that must be marginalized over in spectroscopic studies.
+    We can directly measure the mean extinction of the \lya Forest, which is something that must be marginalized over in spectroscopic studies.
     Providing a direct measurement will allow spectroscopic studies to tighten their constraints.
 }
 
@@ -565,27 +564,83 @@ Assuming the amplitude of galaxy clustering is well constrained (e.g. by the LSS
 \section{Discussion}
 \label{sec:discussion}
 
-Mention how we need to understand the selection function, because we will naturally observe galaxies that are brighter than normal, which will dilute the $\du$ signal, and bias the analysis towards smaller $\du$.
-
 \begin{figure}[t!]
     \script{plot_gold_impact.py}
     \begin{centering}
         \includegraphics{figures/gold_impact.pdf}
         \caption{
-            \note{
-                Write this!
-            }
+            Top: redshift distribution of LSST gold sample galaxies that will be impacted by \lya scattering.
+            Middle: the expected $u$ band decrement compared to the expected $u$ band error as a function of redshift.
+            For galaxies in the range $2.0 < z < 2.5$, the $u$ band decrement will be similar to the $u$ band error
+            Bottom: the expected $g$ band decrement compared to the expected $g$ band error as a function of redshift.
+            For galaxies at $z > 2.5$, the $g$ band decrement will be greater than the photometric error in the $g$ band.
         }
         \label{fig:gold_impact}
     \end{centering}
 \end{figure}
 
+Begin by listing the observables with their respective SNR.
+
+\begin{enumerate}
+    \item Why are these important?
+    \begin{itemize}
+        \item can add to Rubin cosmology
+        \item measure how neutral hydrogen gas clusters and correlates with mass and dust, the latter of which is particularly important to CMB
+        \item allows us to measure $\bar{F}$ (this is just via the normalization of the correlation function, right?), which is marginalized over in spectroscopic \lya studies.
+        Providing an external measurement of this will tighten constraints from all \lya measurements, which will improve constraints on things like neutrino masses, dark matter models (?).
+        \note{Note, is the uncertainty on $\bar{F}$ a big part of the \lya error budget?}
+    \end{itemize}
+    
+    \item How is this measurement different from spectroscopic Lyman-alpha measurements?
+    \begin{itemize}
+        \item Throw away the redshift resolution provided by spectroscopy, in exchange for the huge statistics of a photometric survey. Compare our SNR to that offered by recent spectroscopic surveys.
+        \item Anze mentioned that this allows us to measure $\bar{F}$, which is not measureable with spectroscopic surveys
+        \item I think this allows us to be less sensitive to the continuum (the so-called continuum bias), which is a problem in spectroscopic measurements (this is potentially related to the point above) \note{(?)}
+    \end{itemize}
+    
+    \item Systematics
+    \begin{itemize}
+        \item DLAs? What if the host is a DLA? this would impact the $g$ band.
+        \item Impact of Lyman-alpha on the $g$ band? This will be a systematic for photo-z's and $u$ band prediction.
+        \item Lyman-beta absorption from high-redshift clouds will impact low-wavelength $u$ band. This will increase apparent Lyman-alpha absorption. I think we can model this. (why don't they go below the Lyman-beta in spectroscopic surveys? Is this actually hard to model?) Maybe we should frame this as a measurement of the effective optical depth of the IGM, rather than just a Lyman-alpha measurement? You can extract the Lyman-alpha signal given assumptions about modeling each component.
+        \item metal contamination [relevant discussion in arXiv:1904.01110?]
+        \item mischaracterization of the mean SED shape ($\bar{s}(\lambda)$). Also maybe $\delta_s(\lambda)$?
+        \item non-uniform magnitude calibration on the sky. Is this a problem or does it just average out?
+        \item while lensing magnification was discussed as a signal above, it is also a source of systematic errors for photo-z's and u band prediction
+        \item speaking of photo-z's, all of the typical systematics associated with photo-z's are also a problem here. Both methods rely on calibrating relationships between galaxy colors and redshifts as low redshift, then extrapolating to high redshift. RAIL should allow us to test all of these things. If the Lya pipeline is written in Ceci, we can plug it into RAIL to test all of these things.
+        \item we also need to understand our selection function.
+        We will preferentially observe brighter galaxies, and they will have lower photometric errors, which increase their chances of passing the redshift cuts.
+        This means our analysis will be naturally biased towards smaller $\du$.
+    \end{itemize}
+    
+    \item Similar signals
+    \begin{itemize}
+        \item impact on $g$ band. This is mentioned as a systematic above, but it could also be a signal. Would need to do photo-z's and prediction using $rizy$ magnitudes. Might be possible, and would allow us to probe a different range of redshift. Will be tested in a future analysis (?)
+    \end{itemize}
+    
+    \item Photo-z systematic
+    \begin{itemize}
+        \item In addition to being considered here as a cosmological signal, \lya scattering will be a systematic for photo-z estimation, affecting high-redshift galaxies.
+        Figure \ref{fig:gold_impact} shows some initial analysis of how \lya will impact the LSST gold sample.
+        The impact will be assessed in a future paper (or if it's easy, we could do this here?)
+        Look to see how important the highest-redshift tomographic bin is to WL cosmology. If it's super important, mention that here!
+    \end{itemize}
+\end{enumerate}
+
 
 \section{Conclusion}
 \label{sec:conclusion}
 
+We developed a photometric \lya signal, which provides ...
+Considering only statistical errors, we predicted SNR for the following correlation functions...
+Given the high SNR, these measurements are likely to be systematics dominated, just like most of Rubin cosmology.
+We think this is a probe worth pursuing, including systematics modeling.
+
+
 \begin{acknowledgments}
-    \note{write this!}
+    Thanks to Mario for input during astrostats.
+    Thanks to Matt McQuinn for discussions (also ask him to review the paper before submission).
+    Also Miguel Morales for feedback.
 \end{acknowledgments}
 
 \software{

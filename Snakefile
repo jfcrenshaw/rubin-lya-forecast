@@ -85,6 +85,7 @@ rule calculate_correlations:
 rule calculate_correlation_snr:
     input:
         "src/data/correlations.pkl",
+        "src/data/photoz_metrics_bg.pkl",
         "src/scripts/utils/survey_areas.py"
     output:
         "src/data/correlation_snr.pkl"

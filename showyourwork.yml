@@ -3,13 +3,11 @@ version: 0.3.0
 dependencies:
   src/tex/ms.tex:
     - src/tex/bib.bib
-  src/scripts/plot_decrements:
+  src/scripts/plot_decrements.py:
     - src/data/bandpasses
     - src/scripts/utils/calculate_extinction.py
   src/scripts/load_truth_catalog.py:
     - src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat
-  src/scripts/plot_ensemble_losses.py:
-    - src/data/models
   src/scripts/create_observed_catalogs.py:
     - src/scripts/utils/error_models.py
   src/scripts/plot_photoz_metrics.py:
@@ -23,12 +21,17 @@ dependencies:
     - src/data/correlations.pkl
   src/scripts/plot_correlation_snr.py:
     - src/data/correlation_snr.pkl
-  src/scripts/plot_gold_impact:
+  src/scripts/plot_gold_impact.py:
     - src/data/bandpasses
     - src/scripts/utils/calculate_extinction.py
     - src/scripts/utils/error_models.py
     - src/scripts/create_observed_catalogs.py
     - src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat
+  src/scripts/plot_ensemble_losses.py:
+    - src/data/models
+  src/scripts/plot_ensemble_corners.py:
+    - src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat
+    - src/data/models
 
 datasets:
   10.5072/zenodo.1086359:

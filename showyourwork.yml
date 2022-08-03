@@ -1,4 +1,5 @@
 version: 0.3.0
+
 dependencies:
   src/tex/ms.tex:
     - src/tex/bib.bib
@@ -28,3 +29,8 @@ dependencies:
     - src/scripts/utils/error_models.py
     - src/scripts/create_observed_catalogs.py
     - src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat
+
+datasets:
+  10.5072/zenodo.1086359:
+    contents:
+      Euclid_trim_27p10_3p5_IR_4NUV.dat: src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat

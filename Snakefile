@@ -22,6 +22,8 @@ rule plot_decrements:
         "src/scripts/plot_decrements.py"
 
 rule train_ensembles:
+    input:
+        "src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat"
     output:
         directory("src/data/models")
     cache:

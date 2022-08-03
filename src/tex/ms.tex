@@ -181,7 +181,7 @@ The rest frame wavelength of the \lya transition is $\lambda_\alpha = 1216$\AA, 
 This means that galaxies at $z > 1.63$ will appear dimmer than expected in the $u$ band because some of this light will be scattered by neutral hydrogen along the line of sight. 
 This effect will be greatest for galaxies at $z > 2.36$ whose entire $u$ band will be impacted by this scattering.
 Galaxies at redshift $z > 2.36$ will also appear dimmer in the $g$ band,
-galaxies at $z > ...$ will be dimmer in the $r$, and so on.
+galaxies at $z > 3.41$ will be dimmer in the $r$ band, and so on.
 At redshifts $z \gtrsim 6$ prior to reionization, 100\% of the light is blocked.
 
 With a few assumptions, we can estimate the impact  of \lya scattering on LSST observations.
@@ -259,13 +259,11 @@ Depending on the context, $m$ might refer to only the LSST $grizy$ bands, or mig
 
 To simulate an observed catalog, we add \lya decrements according to the model in Section \ref{sec:decrements}.
 We then simulate photometric errors according to the \citet{ivezic2019} error model, including the low SNR generalization presented in \citet{pzflow} and the extension to Euclid and Roman presented in \citet{graham2020}.
-We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}_\alpha$.
+We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}$.
 Finally, we cut galaxies that have negative fluxes in any bands and apply a cut of SNR > 5 in the $i$ band.
 
 The photometric errors are a function of survey depth, which increases with observing time.
-As such, we simulate errors for LSST survey durations from 1-10 years to study how the SNR changes over time, and propagate this impact throughout the whole analysis.
-In addition, we perform the analysis using a ``perfect'' catalog, consisting of LSST plus Roman bands with zero photometric error.
-This perfect catalog represents the upper limit on the SNR of this kind of analysis, due to inherent uncertainty in photo-z estimation and predicting $u$ band magnitudes, even with perfect photometry.
+As such, we simulate catalogs for LSST year 1, 5, and 10 to study how the SNR changes over time, and propagate this impact throughout the whole analysis.
 
 \subsection{Selecting the high-redshift sample}
 \label{sec:photo-z}
@@ -335,7 +333,7 @@ Despite low completeness, we still have very large galaxy samples due to the imm
     \begin{centering}
         \includegraphics{figures/sigma_du.pdf}
         \caption{
-            The effective per-galaxy uncertainty on $\du$ as a function of survey duration.
+            The effective per-galaxy uncertainty on $\du$ as a function of survey duration, plus the inclusion of NIR photometry.
             The expected magnitude of $\du$ can be seen in Figure \ref{fig:decrements}.
             Even with LSST year 10 the SNR is low, and adding NIR data from Euclid or Roman does not improve the per-galaxy inference.
         }
@@ -391,9 +389,7 @@ This is the subject of Section \ref{sec:correlations}.
     \begin{centering}
         \includegraphics{figures/correlation_snr.pdf}
         \caption{
-            \note{
-                Write this!
-            }
+            SNR of the \lya correlation functions as a function of LSST duration, plus the inclusion of NIR photometry.
         }
         \label{fig:correlation_snr}
     \end{centering}
@@ -570,6 +566,20 @@ Assuming the amplitude of galaxy clustering is well constrained (e.g. by the LSS
 \label{sec:discussion}
 
 Mention how we need to understand the selection function, because we will naturally observe galaxies that are brighter than normal, which will dilute the $\du$ signal, and bias the analysis towards smaller $\du$.
+
+\begin{figure}[t!]
+    \script{plot_gold_impact.py}
+    \begin{centering}
+        \includegraphics{figures/gold_impact.pdf}
+        \caption{
+            \note{
+                Write this!
+            }
+        }
+        \label{fig:gold_impact}
+    \end{centering}
+\end{figure}
+
 
 \section{Conclusion}
 \label{sec:conclusion}

@@ -22,3 +22,9 @@ dependencies:
     - src/data/correlations.pkl
   src/scripts/plot_correlation_snr.py:
     - src/data/correlation_snr.pkl
+  src/scripts/plot_gold_impact:
+    - src/data/bandpasses
+    - src/scripts/utils/calculate_extinction.py
+    - src/scripts/utils/error_models.py
+    - src/scripts/create_observed_catalogs.py
+    - src/data/Euclid_trim_27p10_3p5_IR_4NUV.dat

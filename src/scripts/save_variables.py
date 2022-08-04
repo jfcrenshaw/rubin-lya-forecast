@@ -49,10 +49,12 @@ with open(paths.data / "photoz_metrics_fg.pkl", "rb") as file:
 
 # save sigma_du SNR
 with open(paths.data / "sigma_du.pkl", "rb") as file:
-    noise = pickle.load(file)[10]  # sigma_du for LSST Y10
     signal = lya_decrement(3, "u", 0)
-    snr = signal / noise
-    open(paths.output / "snr_y10.txt", "w").write(f"{snr:.1f}")
+    noise = pickle.load(file)
+    open(paths.output / "snr_y10.txt", "w").write(f"{signal / noise[10]:.1f}")
+    open(paths.output / "snr_perfect.txt", "w").write(
+        f"{signal / noise['perfect']:.1f}"
+    )
 
 # save the correlation SNRs
 with open(paths.data / "correlation_snr.pkl", "rb") as file:

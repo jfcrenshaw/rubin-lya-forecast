@@ -53,29 +53,30 @@
 \author{Anze Slosar} % Orcid?
 \affiliation{}
 
-\author{Alex Malz} % Orcid?
-\affiliation{}
-
-\author{Marilena Loverde} % Orcid?
-\affiliation{}
-
-\author{Sam Schmidt} % Orcid?
-\affiliation{}
-
-\author{Melissa Graham} % Orcid?
+\author{Andrew Connolly} % Orcid?
 \affiliation{}
 
 \author{Eric Gawiser} % Orcid?
 \affiliation{}
 
-\author{Jeff Newman} % Orcid?
+\author{Melissa Graham} % Orcid?
 \affiliation{}
 
 \author{Daniel Gruen} % Orcid?
 \affiliation{}
 
-\author{Andrew Connolly} % Orcid?
+\author{Marilena Loverde} % Orcid?
 \affiliation{}
+
+\author{Alex Malz} % Orcid?
+\affiliation{}
+
+\author{Jeff Newman} % Orcid?
+\affiliation{}
+
+\author{Sam Schmidt} % Orcid?
+\affiliation{}
+
 
 \collaboration{100}{(Dark Energy Science Collaboration)}
 
@@ -104,6 +105,8 @@
     These many absorption lines can be observed in the spectra of high-redshift objects.
     This feature has been named the \lya Forest.
 }
+
+\note{Reference the Madau paper in here.}
 
 \note{
     The neutral hydrogen gas traces the large scale structure of the diffuse baryons in the IGM.
@@ -358,7 +361,8 @@ The standard deviation of these means provides an estimate of $\sigma_{\small \d
 The effective uncertainty per galaxy is plotted as a function of survey duration in Figure \ref{fig:sigma_du}.
 Even with LSST year 10, the SNR for individual galaxies is \variable{output/snr_y10.txt} (c.f. Figure \ref{fig:decrements}).
 Additionally, NIR data from Euclid or Roman does not improve $u$ band predictions.
-Evidently, we have little hope of measuring this effect for individual galaxies, however by leveraging the large sample size provided by LSST we may be able to detect the signal in aggregate by calculating correlation functions.
+This uncertainty is dominated by photometric errors -- running the pipeline with perfect photometry results in SNR of \variable{output/snr_perfect.txt}.
+Even with perfect photometry, we have little hope of measuring this effect for individual galaxies, however we can leverage the massive galaxy sample of LSST to calculate correlations in the \lya signal.
 This is the subject of Section \ref{sec:correlations}.
 
 
@@ -538,6 +542,9 @@ Including NIR photometry from Euclid and Roman further boosts the SNR to \variab
 
 The amplitude of this cross-correlation is the product of the amplitude of galaxy clustering and the amplitude of the \lya correlation function.
 Assuming the amplitude of galaxy clustering is well constrained (e.g. by the LSST 3x2pt analysis \citealt{descSRD}), then LSST will be able to provide strong constraints on the amplitude of the \lya correlation function.
+\note{
+    Can we also use the correlation on small-scales to characterize the neutral hydrogen environment around the foreground galaxies? 
+}
 
 
 \subsection{Correlation with lensing}

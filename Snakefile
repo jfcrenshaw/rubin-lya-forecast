@@ -114,6 +114,7 @@ rule save_variables:
         "src/tex/output/m_samples.txt",
         "src/tex/output/zu_samples.txt",
         "src/tex/output/snr_y10.txt",
+        "src/tex/output/snr_perfect.txt",
         "src/tex/output/snr_wff_y1.txt",
         "src/tex/output/snr_wff_y10.txt",
         "src/tex/output/snr_wff_y10+euclid+roman.txt",

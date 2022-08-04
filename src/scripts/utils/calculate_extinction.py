@@ -140,7 +140,10 @@ def F_bar(z: Union[np.ndarray, float]) -> Union[np.ndarray, float]:
 
 
 def lya_decrement(
-    redshift: Union[np.ndarray, float], band: str, spectral_index: float = 0
+    redshift: Union[np.ndarray, float],
+    band: str,
+    spectral_index: float = 0,
+    batch_size: int = 1000,
 ) -> Union[np.ndarray, float]:
     """Calculate mean Lya decrement for the given band as a function of redshift.
 
@@ -157,6 +160,8 @@ def lya_decrement(
         Name of the band to calculate decrement for. Supports "u", "g", and "r".
     spectral_index: float, default=0
         Controls the mean galaxy spectrum. See the note above.
+    batch_size: int, default=1000
+        The batch size for calculating decrements.
 
     Returns
     -------
@@ -173,19 +178,25 @@ def lya_decrement(
     mean_sed = bandpass.wavelen**spectral_index
     bandpass.reweight_bandpass(bandpass.wavelen, mean_sed)
 
-    # get the redshift grid
-    z_grid = np.tile(bandpass.wavelen / LYMAN_WAVELEN - 1, (len(z), 1))
+    decrements = []
+    for i in range(0, len(z), batch_size):
+        z_batch = z[i : i + batch_size]
 
-    # calculate the transmission as a function of redshift
-    F_grid = F_bar(z_grid)
+        # get the redshift grid
+        z_grid = np.tile(bandpass.wavelen / LYMAN_WAVELEN - 1, (len(z_batch), 1))
 
-    # beyond the source redshift, set transmission = 1
-    F_grid[z_grid > z[:, None]] = 1  # type: ignore
+        # calculate the transmission as a function of redshift
+        F_grid = F_bar(z_grid)
 
-    # convert the redshift grid to wavelength
-    wavelens = LYMAN_WAVELEN * (1 + z_grid)
+        # beyond the source redshift, set transmission = 1
+        F_grid[z_grid > z_batch[:, None]] = 1  # type: ignore
 
-    # calculate the decrements
-    decrements = -2.5 * np.log10(np.trapz(bandpass.R(wavelens) * F_grid, wavelens))
+        # convert the redshift grid to wavelength
+        wavelens = LYMAN_WAVELEN * (1 + z_grid)
 
-    return decrements.squeeze()
+        # calculate the decrements
+        decs = -2.5 * np.log10(np.trapz(bandpass.R(wavelens) * F_grid, wavelens))
+
+        decrements += list(decs)
+
+    return np.array(decrements)

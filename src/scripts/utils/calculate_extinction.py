@@ -199,4 +199,4 @@ def lya_decrement(
 
         decrements += list(decs)
 
-    return np.array(decrements)
+    return np.array(decrements).squeeze()

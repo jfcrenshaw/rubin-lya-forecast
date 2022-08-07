@@ -38,7 +38,7 @@ def plot_losses(filename: str, ax: plt.Axes, name: str) -> None:
 
 # create the figure
 fig, (ax1, ax2, ax3) = plt.subplots(
-    1, 3, figsize=(6.75, 2), constrained_layout=True, dpi=200
+    1, 3, figsize=(6.75, 2), constrained_layout=True, dpi=200, sharey=True
 )
 
 # plot the losses

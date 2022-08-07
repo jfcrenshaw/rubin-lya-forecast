@@ -30,7 +30,7 @@ test_set = sample.iloc[train_size:].copy()
 # will be used for the ShiftBounds bijector below
 buffer = 0.5
 mins = jnp.array([0, train_set.u.min() - buffer])
-maxs = jnp.array([3.5, train_set.u.max() + buffer])
+maxs = jnp.array([4, train_set.u.max() + buffer])
 
 
 # define a function to train a FlowEnsemble
@@ -65,9 +65,9 @@ def train_ensemble(conditional_columns: list) -> Tuple[FlowEnsemble, dict]:
     )
 
     # train the ensemble
-    learning_rates = [1e-3, 2e-4, 1e-4]
-    N_epochs = [40, 40, 40]
-    seeds = [123, 312, 231]
+    learning_rates = [1e-3, 2e-4, 1e-4, 2e-5]
+    N_epochs = [40, 40, 40, 40]
+    seeds = [1234, 4123, 3412, 2341]
     losses = [
         ensemble.train(
             train_set,

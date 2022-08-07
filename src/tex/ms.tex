@@ -42,7 +42,7 @@
 % Begin!
 \begin{document}
 
-\title{Seeing the Forest for the Trees: Feasibility of Detecting a Photometric Lyman-alpha Signal\\with the Vera Rubin Observatory}
+\title{Seeing the Forest for the Trees: the Lyman-alpha Forest as a Cosmological Signal for the Vera Rubin Observatory}
 
 \correspondingauthor{John Franklin Crenshaw}
 \email{jfc20@uw.edu}
@@ -95,47 +95,35 @@
 \section{Introduction}
 \label{sec:intro}
 
-\note{
-    The space between galaxies is filled with a diffuse gas that accounts for most of the baryonic content of the universe \needscite.
-    Most of this gas is hydrogen, and after reionization, most of this hydrogen is ionized.
-    However, a small fraction of this hydrogen is neutral (describe why - how is it protected).
-    Despite it's low density, this gas has a very high cross section with photons at $\lambda_\alpha$, which excites the \lya transition.
-    This causes the neutral gas to scatter light at this wavelength out of the line of sight of the observer.
-    Many such scatterings along the line of sight create a plethora of absorption lines blueward of the \lya emission line.
-    These many absorption lines can be observed in the spectra of high-redshift objects.
-    This feature has been named the \lya Forest.
-}
+The space between galaxies is filled with the intergalactic medium (IGM), a diffuse gas that accounts for the majority of baryons in the universe \citep{mcquinn2016}.
+The IGM consists primarily of hydrogen and helium, with some metal contamination at late times \needscite.
+Subsequent to reionization at redshift $\sim 6$, the vast majority of hydrogen in the IGM is ionized, but a small fraction ($\sim 10^{-5}$) remains neutral.
+This reservoir of neutral hydrogen creates absorption features in the UV spectra of distant objects via the Lyman series transitions \citep{gunn1965}.
 
-\note{Reference the Madau paper in here.}
+The numerous strong \lya absorption lines visible in the spectra of high-redshift quasars are known as the \lya Forest \needscite.
+The \lya Forest has been used to study the density, temperature, and ionization state of the IGM as a function of redshift \needscite.
+Further, as the neutral hydrogen traces the large scale structure of the universe, statistics of the \lya Forest have been used, among other things, to constrain dark matter models \needscite, neutrino masses \needscite, the growth of cosmological structure \needscite, and the dark energy equation of state \needscite.
 
-\note{
-    The neutral hydrogen gas traces the large scale structure of the diffuse baryons in the IGM.
-    This allows us to use the \lya Forest as a comsological tracer of large scale structure.
-    Spectroscopic surveys use statistics of the \lya Forest to measure properties of the gas, and measure the clustering of matter in the universe.
-    Maybe also Dark Energy?
-    Constrain Dark Matter?
-    Many citations here.
-}
+The opacity of the IGM also decreases the UV flux of distant galaxies observed in photometric surveys \citep{madau1995}.
+All photons with wavelengths shorter than the Lyman limit at $\lambda = 912$ \AA are energetic enough to ionize hydrogen, and so these photons are totally absorbed by the IGM.
+The Lyman dropout technique leverages this fact to select high-redshift galaxies by searching for galaxies that are clearly visible in redder bands, but are nearly or totally invisible in bluer bands \needscite.
+At longer wavelengths, galaxy fluxes are diminished by absorption in the \lya Forest.
+The mean effect of this \lya scattering has been considered in template-based photometric redshift estimation (e.g. \citealt{benitez2000, brammer2008}).
+In this paper, we consider variations in the photometric opacity of the \lya Forest due to large scale structure as a cosmological signal.
 
-\note{
-    Photometric surveys like the Rubin observatory do not have the spectral resolution to identify the trees, but they may be able to see the forest.
-    High-redshift galaxies will have their blue light scattered by the \lya Forest, which will result in observing lower magnitudes in blue bands than would otherwise be expected.
-    Furthermore, this effect will be greater for galaxies that are behind overdensities, and less for galaxies that are behind underdensities.
-}
-
-\note{
-    Detecting this effect relies on selecting high-redshift galaxies, predicting how bright they should be in the blue bands, and comparing to the observed magnitudes.
-    This is hard, as predicting redshifts from photometric data is noisy and prone to systematic errors.
-    In addition, bluer bands typically have lower SNR to begin with.
-    And the effect is relatively small.
-    However, the hope is that when averaged over many sources in a huge survey like LSST, the signal will rise above the noise and we will be able to see the forest for the trees.
-}
+The Vera C. Rubin Observatory's Legacy Survey of Space and Time (LSST; \needscite) will conduct a 10 year survey of the southern sky using 6 photometric bands.
+The bluest of these bands, the $u$ band, has support over the range $3200 < \lambda < 4085$.
+Thus galaxies at redshifts greater than 2.36 will have the $u$ band totally covered by the \lya Forest.
+We propose to use Rubin's other 5 bands to select a high-redshift sample for which we will predict the $u$ band flux and compare to the observed value.
+All of these galaxies will have dimmer $u$ bands than would be otherwise expected.
+This effect will be greater for galaxies that lie behind an overdensity of neutral hydrogen, while the effect will be lesser for galaxies that lie behind an underdensity.
 
 \note{
     What photometric surveys lack in spectral resolution, they make up for in statistics.
     This enables us to do complementary things.
     We can directly measure the mean extinction of the \lya Forest, which is something that must be marginalized over in spectroscopic studies.
     Providing a direct measurement will allow spectroscopic studies to tighten their constraints.
+    Talk about other benefits.
 }
 
 \note{
@@ -157,7 +145,7 @@
 
 Assume that a distant galaxy has an intrinsic SED $f(\lambda)$ in the rest frame of the observer.
 \lya scattering in the IGM modifies the SED, resulting in the observed SED $f_\alpha(\lambda) = F(\lambda) f(\lambda)$, where $F(\lambda)$ is the transmission of the \lya Forest.
-Note that $F(\lambda)$ traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line of sight, where $\lambda_\alpha = 1216$\AA is the wavelength of the \lya transition.
+Note that $F(\lambda)$ traces the density of neutral hydrogen gas at redshift $z = \lambda / \lambda_\alpha - 1$ along the line of sight, where $\lambda_\alpha = 1216$ \AA is the wavelength of the \lya transition.
 
 Photometric surveys do not observe the SED directly, but rather the flux of the SED integrated over a bandpass:
 \begin{align}
@@ -179,7 +167,7 @@ For photometric surveys, it is also natural to define the magnitude decrement
 \end{align}
 That is, the magnitude of the galaxy will appear $\Delta m$ magnitudes dimmer due to \lya scattering along the line of sight.
 
-The rest frame wavelength of the \lya transition is $\lambda_\alpha = 1216$\AA, and the Rubin $u$ band has support over the wavelengths $3200 < \lambda < 4085$.
+The rest frame wavelength of the \lya transition is $\lambda_\alpha = 1216$ \AA, and the Rubin $u$ band has support over the wavelengths $3200 < \lambda < 4085$.
 This means that galaxies at $z > 1.63$ will appear dimmer than expected in the $u$ band because some of this light will be scattered by neutral hydrogen along the line of sight. 
 This effect will be greatest for galaxies at $z > 2.36$ whose entire $u$ band will be impacted by this scattering.
 Galaxies at redshift $z > 2.36$ will also appear dimmer in the $g$ band,
@@ -313,7 +301,8 @@ The results of the redshift cut are shown in Figure \ref{fig:photoz_metrics_bg}.
 The purity is defined as the fraction of galaxies in the sample that are truly at $z > 2.36$.
 The integral threshold in Equation \ref{eq:redshift-cut} was chosen to ensure a high purity.
 As LSST progresses through its 10 years of observation, the purity rises from \variable{output/bg_purity_y1.txt} to \variable{output/bg_purity_y10.txt}.
-Samples with NIR photometry from Euclid \note{[check later]} or Roman have purity of nearly 1.0.
+Samples with NIR photometry from Euclid or Roman have purity of nearly 1.0.
+\note{The plots and numbers in this section are auto-generated when I change things in my scripts. So it is possible that the language/numbers get a little out of wack while I am experimenting. I need to make sure this all lines up in the final draft.}
 
 The necessary sacrifice for high purity is low completeness.
 Completeness is defined as the fraction of galaxies that truly are at $z > 2.36$ that survive the redshift cut of Equation \ref{eq:redshift-cut}.
@@ -393,6 +382,7 @@ This is the subject of Section \ref{sec:correlations}.
         \includegraphics{figures/correlation_snr.pdf}
         \caption{
             SNR of the \lya correlation functions as a function of LSST duration, plus the inclusion of NIR photometry.
+            $w_{\small FF}$ is the \lya autocorrelation; $w_{\small Fg}$ is the cross correlation with foreground galaxy clustering.
         }
         \label{fig:correlation_snr}
     \end{centering}
@@ -415,7 +405,7 @@ In Fourier space,
     \delta_F(\textbf{k}) = b_F (1 + \mu_\textbf{k}^2 \beta_F) \delta_b(\textbf{k}),
     \label{eq:fourier-tracer}
 \end{align}
-where $b_F \approx -0.13$ is the linear bias of the \lya field, $\beta_F \approx 1.5$ measures the strength of redshift-space distortions (RSD)\footnote{Unlike the galaxy tracer (c.f. Equation \ref{eq:galaxy-tracer}), $\beta$ is another free parameter. \note{This has to do with the nonlinear transformation applied to the optical depth? I need to work on understanding this.}}, $\mu_\textbf{k}$ is the cosine between the mode $\textbf{k}$ and the line of sight, and $\delta_b(\textbf{k})$ are the Fourier space fluctuations of the baryon density field \needscite.
+where $b_F \approx -0.13$ is the linear bias of the \lya field, $\beta_F \approx 1.5$ measures the strength of redshift-space distortions (RSD)\footnote{Unlike the galaxy tracer (c.f. Equation \ref{eq:galaxy-tracer}), $\beta$ is another free parameter.}, $\mu_\textbf{k}$ is the cosine between the mode $\textbf{k}$ and the line of sight, and $\delta_b(\textbf{k})$ are the Fourier space fluctuations of the baryon density field \needscite.
 Note that the bias is negative as more neutral hydrogen corresponds to less transmitted flux.
 
 Using Equation \ref{eq:F}, we can calculate fractional variations in the photometric transmission $F$:
@@ -596,6 +586,8 @@ Begin by listing the observables with their respective SNR.
         \item allows us to measure $\bar{F}$ (this is just via the normalization of the correlation function, right?), which is marginalized over in spectroscopic \lya studies.
         Providing an external measurement of this will tighten constraints from all \lya measurements, which will improve constraints on things like neutrino masses, dark matter models (?).
         \note{Note, is the uncertainty on $\bar{F}$ a big part of the \lya error budget?}
+        \item measure the ionization state of the IGM?
+        \item measure the mean neutral gas profile around foreground galaxies?
     \end{itemize}
     
     \item How is this measurement different from spectroscopic Lyman-alpha measurements?
@@ -648,6 +640,7 @@ We think this is a probe worth pursuing, including systematics modeling.
     Thanks to Mario for input during astrostats.
     Thanks to Matt McQuinn for discussions (also ask him to review the paper before submission).
     Also Miguel Morales for feedback.
+    Talk to Jess Werk.
 \end{acknowledgments}
 
 \software{
@@ -693,6 +686,7 @@ We think this is a probe worth pursuing, including systematics modeling.
         Corner plots comparing samples generated by the flow ensembles (blue), to the truth catalogs they were trained on (gray).
         The flow ensembles model $p(z, u|m)$, so the first two columns demonstrate that the pairwise and marginal distributions of $z$ and $u$ are modeled well, while the remaining columns demonstrate that the distributions of $z$ and $u$ conditioned on $m$ are modeled well.
         The blue and gray distributions are difficult to distinguish, which is evidence that the flow ensembles are doing a very good job of modeling the distribution of galaxies in the truth catalog.
+        \note{I need to change these colors so the two distributions are a little easier to distinguish.}
     }
     \label{fig:corners}
 \end{figure}

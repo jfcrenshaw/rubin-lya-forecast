@@ -3,11 +3,14 @@ import pickle
 
 import numpy as np
 import pyccl as ccl
-from showyourwork.paths import user as Paths
-from utils import LYMAN_WAVELEN, Bandpass, F_bar, build_tracer, load_truth_catalog
-
-# instantiate the paths
-paths = Paths()
+from utils import (
+    LYMAN_WAVELEN,
+    Bandpass,
+    F_bar,
+    build_tracer,
+    load_truth_catalog,
+    paths,
+)
 
 # setup the cosmology
 # using parameters from Table 2 of Planck 2018

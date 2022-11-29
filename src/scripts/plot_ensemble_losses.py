@@ -2,10 +2,8 @@
 import pickle
 
 import matplotlib.pyplot as plt
-from showyourwork.paths import user as Paths
-
-# instantiate the paths
-paths = Paths()
+import numpy as np
+from utils import paths
 
 
 # define a function for plotting the losses
@@ -25,6 +23,12 @@ def plot_losses(filename: str, ax: plt.Axes, name: str) -> None:
     with open(filename, "rb") as file:
         losses = pickle.load(file)
 
+    # combine the losses across training iterations
+    losses = {
+        flow: np.array([np.array(loss[flow]) for loss in losses]).flatten()
+        for flow in losses[0]
+    }
+
     # plot the losses
     for loss in losses.values():
         ax.plot(loss, c="C0", alpha=0.5)
@@ -43,9 +47,9 @@ fig, (ax1, ax2, ax3) = plt.subplots(
 
 # plot the losses
 model_dir = paths.data / "models"
-plot_losses(model_dir / "lsst_ensemble_losses.pkl", ax1, "LSST")
-plot_losses(model_dir / "lsst+euclid_ensemble_losses.pkl", ax2, "LSST + Euclid")
-plot_losses(model_dir / "lsst+roman_ensemble_losses.pkl", ax3, "LSST + Roman")
+plot_losses(model_dir / "lsstY10_ensemble_losses.pkl", ax1, "LSST")
+plot_losses(model_dir / "lsstY10+euclid_ensemble_losses.pkl", ax2, "LSST + Euclid")
+plot_losses(model_dir / "lsstY10+roman_ensemble_losses.pkl", ax3, "LSST + Roman")
 
 # set the y label on the leftmost panel
 ax1.set(ylabel="Training loss")

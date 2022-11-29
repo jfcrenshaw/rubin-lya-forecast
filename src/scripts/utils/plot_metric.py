@@ -26,11 +26,11 @@ def plot_metric(
     """
     # pull out the metrics
     md = metric_dict.copy()
-    euclid_metric = md.pop("euclid", None)
-    roman_metric = md.pop("roman", None)
-    both_metric = md.pop("Y10+euclid+roman", None)
-    perfect_metric = md.pop("perfect", None)
-    lsst_metrics = dict(sorted(md.items()))
+    euclid_metric = md.pop("lsstY10+euclid", None)
+    roman_metric = md.pop("lsstY10+roman", None)
+    both_metric = md.pop("lsstY10+both", None)
+    lsst_metrics = {int(name[5:]): metric for name, metric in md.items()}
+    lsst_metrics = dict(sorted(lsst_metrics.items()))
 
     # setup the axis
     lsst_ticks = [1, 5, 10]

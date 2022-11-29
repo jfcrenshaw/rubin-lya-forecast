@@ -1,11 +1,7 @@
 """Plot the Lyman-alpha band decrements."""
 import matplotlib.pyplot as plt
 import numpy as np
-from showyourwork.paths import user as Paths
-from utils import lya_decrement
-
-# instantiate the paths
-paths = Paths()
+from utils import lya_decrement, paths
 
 # create the figure
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 2.7), constrained_layout=True)

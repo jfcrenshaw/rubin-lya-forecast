@@ -2,11 +2,9 @@
 import pickle
 
 import matplotlib.pyplot as plt
-from showyourwork.paths import user as Paths
-from utils import plot_metric
+from utils import paths, plot_metric
 
 # instantiate paths
-paths = Paths()
 
 with open(paths.data / "correlation_snr.pkl", "rb") as file:
     correlation_snr = pickle.load(file)

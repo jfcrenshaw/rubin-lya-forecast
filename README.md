@@ -14,14 +14,13 @@ Paper forecasting the SNR for a photometric Lyman-alpha signal detected with the
 
 To Do:
 
+- Figure out how to perform the quality cuts in a way that results in max SNR but without bias.
 - Break down the error budget (see notes below).
 - Try relaxing the redshift cut to increase the completeness and thereby boost the SNR. We just need to test how bad this biases the analysis. We want the optimal trade-off between SNR and bias.
 - Test the analysis without the g band. Since it will be impacted, let's just test if we can get by without it. If we can, let's just do that!
 - Test the analysis on Delta g instead of Delta u
 - reframe the paper as measuring the transmission of the IGM? We can extract the Lya signal given assumptions about modeling each component.
-- Revisit the way I do quality cuts. Don't require that LSST galaxies pass Euclid and Roman quality cuts. This will boost the sample size and therefore the SNR on the cross correlations.
 - End: change decrement -> increment, because this is actually increasing the magnitude (I hate how astronomical magnitudes are inverse to luminosity - it makes the language so awkward!)
-- End: do a real training set split. Train the FlowEnsembles on a holdout set that I do not estimates redshifts/du for.
 - End: check that the euclid purity for the bg sample worked out in the end. and the lsst purity for the fg sample.
 - End: try generating training sets for each of the flows I train that have the corresponding selection functions already applied to them. See if this results in un-biased inference on $\Delta u$ like the perfect catalog does.
 

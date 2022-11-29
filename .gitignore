@@ -15,3 +15,5 @@ __pycache__
 
 # jupyter notebook checkpoints
 **/.ipynb_checkpoints
+
+**/.DS_Store

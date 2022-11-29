@@ -1,9 +1,7 @@
 """Load Melissa's truth catalog."""
 import pandas as pd
-from showyourwork.paths import user as Paths
 
-# instantiate the paths
-paths = Paths()
+from .paths import paths
 
 
 def load_truth_catalog() -> pd.DataFrame:

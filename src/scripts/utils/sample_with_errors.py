@@ -54,8 +54,8 @@ def sample_with_errors(
     fluxes = fluxes.reshape(-1, fluxes.shape[-1])
 
     # add a flux floor to avoid infinite magnitudes
-    # this flux corresponds to a max magnitude of 30
-    fluxes = np.clip(fluxes, 1e-20, None)
+    # this flux corresponds to a max magnitude of 40
+    fluxes = np.clip(fluxes, 1e-16, None)
 
     # convert back to magnitudes
     mags = -2.5 * np.log10(fluxes)

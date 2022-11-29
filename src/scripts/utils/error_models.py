@@ -380,7 +380,8 @@ class LSSTErrorModel:
             # calculate observed magnitudes
             fluxes = 10 ** (mags / -2.5)
             obsFluxes = fluxes * (1 + rng.normal(scale=nsr))
-            obsFluxes = np.clip(obsFluxes, 0, None)
+            # obsFluxes = np.clip(obsFluxes, 0, None)
+            obsFluxes = np.abs(obsFluxes)
             with np.errstate(divide="ignore"):
                 obsMags = -2.5 * np.log10(obsFluxes)
 

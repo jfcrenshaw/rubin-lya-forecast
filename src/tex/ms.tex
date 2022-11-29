@@ -41,7 +41,7 @@
 % Begin!
 \begin{document}
 
-\title{Seeing the Forest for the Trees: the Lyman-alpha Forest as a Cosmological Signal for the Vera Rubin Observatory}
+\title{Seeing the Forest for the Trees: the Lyman-alpha Forest as a Cosmological Signal\\for the Vera Rubin Observatory}
 
 \correspondingauthor{John Franklin Crenshaw}
 \email{jfc20@uw.edu}
@@ -82,7 +82,7 @@
 % Abstract with filler text
 \begin{abstract}
     The scattering of light by the \lya transition of neutral hydrogen in the intergalactic medium produces the so-called ``\lya Forest'', visible in the observed spectra of distant quasars.
-    This same effect should decrease the flux of high-redshift galaxies observed by the Vera Rubin Observatory in the bluest bands.
+    This same effect will decrease the flux of high-redshift galaxies observed by the Vera Rubin Observatory in the bluest bands.
     Considering photometric errors and cosmic variance, we assess the feasibility of detecting this signal with Rubin photometry via a decrease in $u$ band flux for sources at redshift $> 2.36$.
     \note{Note I haven't estimated cosmic variance yet.}
     We estimate a signal-to-noise ratio (SNR) of NN for the mean \lya absorption, NN for the \lya autocorrelation, NN for the galaxy clustering cross-correlation, NN for the lensing cross-correlation, and NN for the dust cross-correlation.
@@ -246,10 +246,9 @@ For an estimate of the SNR on measurements of \lya variations due to large scale
 \subsection{The simulated catalog}
 \label{sec:catalog}
 
-We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium simulation \citep{springel2005}, including the galaxy formation models of \citep{gonzalez-perez2014} and light cones from \citep{merson2013}.
-This catalog contains $700\,000$ galaxies up to redshift 3.5, with optical LSST photometry and NIR photometry from Euclid and the Roman Space Telescope.
+We use the simulated galaxy catalog of \citet{graham2018, graham2020}, which is based on the Millennium\footnote{We chose not to use the DESC DC2 simulation \citep{dc2, cosmodc2} because this simulation has an overly simple color distribution at high redshifts, which would make photo-z estimation and $u$ band prediction artificially accurate at high redshift.} simulation \citep{millennium-sim}, including the galaxy formation models of \citep{gonzalez-perez2014} and light cones from \citep{merson2013}.
+This catalog contains $\sim 700\,000$ galaxies up to redshift 3.5, with optical LSST photometry and NIR photometry from Euclid and the Roman Space Telescope.
 This constitutes the truth catalog.
-We reserve $100\,000$ randomly selected galaxies for training the inference model (see Section \ref{sec:photo-z}), and use the remaining $600\,000$ to simulate observed catalogs.
 
 Throughout the rest of this paper, we will denote true galaxy redshifts\footnote{Occasionally, $z$ will denote the LSST $z$ band, but this will be obvious from context.} with the variable $z$, intrinsic $u$ band magnitudes with variable $u$, and $u$ band magnitudes including \lya extinction with the variable $u_\alpha$.
 We will use the variable $m$ to refer to the vector of all other true magnitudes.
@@ -258,7 +257,7 @@ Depending on the context, $m$ might refer to only the LSST $grizy$ bands, or mig
 To simulate an observed catalog, we add \lya decrements according to the model in Section \ref{sec:decrements}.
 We then simulate photometric errors according to the \citet{ivezic2019} error model, including the low SNR generalization presented in \citet{pzflow} and the extension to Euclid and Roman presented in \citet{graham2020}.
 We denote the observed magnitudes with variables $\hat{u}_\alpha$, $\hat{m}$.
-Finally, we cut galaxies that have negative fluxes in any bands and apply a cut of SNR > 5 in the $i$ band.
+Finally, we select galaxies with SNR > 5 in the $i$ band.
 
 The photometric errors are a function of survey depth, which improves with observing time.
 As such, we simulate catalogs for LSST year 1, 5, and 10 to study how the SNR changes over time, and propagate this impact throughout the whole analysis.
@@ -281,8 +280,7 @@ As such, we simulate catalogs for LSST year 1, 5, and 10 to study how the SNR ch
     \end{centering}
 \end{figure}
 
-We train an ensemble of 10 normalizing flows using PZFlow \citep{pzflow} to model the conditional distribution $p(z, u | m)$.
-We train the flows on $100\,000$ randomly selected galaxies from the truth catalog.
+We perform redshift cuts and the $\du$ inference (see Section \ref{sec:du}) using an ensemble of 10 normalizing flows created with PZFlow \citep{pzflow} to model the conditional distribution $p(z, u | m)$.
 For more details about training the flows, see Appendix \ref{app:training}.
 
 With the trained model, we wish to select galaxies at $z > 2.36$, since their $u$ bands are maximally impacted by \lya scattering.
@@ -327,6 +325,7 @@ Adding the NIR data, and assuming $8000\deg^2$ overlap with Euclid and $2200\deg
 Despite low completeness, we still have very large galaxy samples due to the immense size of the LSST catalog.
 
 \subsection{Estimating uncertainty on $\du$}
+\label{sec:du}
 
 \begin{figure}
     \script{plot_sigma_du.py}
@@ -359,7 +358,7 @@ The standard deviation of these means provides an estimate of $\sigma_{\small \d
 The effective uncertainty per galaxy is plotted as a function of survey duration in Figure \ref{fig:sigma_du}.
 Even with LSST year 10, the SNR for individual galaxies is \variable{output/snr_y10.txt} (c.f. Figure \ref{fig:decrements}).
 Additionally, NIR data from Euclid or Roman does not improve $u$ band predictions.
-This uncertainty is dominated by photometric errors -- running the pipeline with perfect photometry results in SNR of \variable{output/snr_perfect.txt}.
+This uncertainty is dominated by photometric errors -- running the pipeline with perfect photometry results in SNR of NN.%\variable{output/snr_perfect.txt}.
 Even with perfect photometry, we have little hope of measuring this effect for individual galaxies, however we can leverage the massive galaxy sample of LSST to calculate correlations in the \lya signal.
 This is the subject of Section \ref{sec:correlations}.
 
@@ -598,7 +597,8 @@ Begin by listing the observables with their respective SNR.
         Providing an external measurement of this will tighten constraints from all \lya measurements, which will improve constraints on things like neutrino masses, dark matter models, etc.
         \note{Is the uncertainty on $\bar{F}$ a big part of the \lya error budget?}
         \item measure the ionization state of the IGM?
-        \item measure the mean neutral gas profile around foreground galaxies?
+        \item measure the mean neutral gas profile around foreground galaxies? Maybe could help constrain boundaries between CGM/IGM? Could this help us determine the LyC escape fractions of galaxies at these redshifts? Would it be possible/interesting to calculate correlation functions at different angles from galaxy disks? Lots of pieces on this in Astro2020. Talk to Jess Werk.
+        \item maybe we can also correlate HI to properties of the foreground galaxies? e.g. the UV luminosity?
     \end{itemize}
     
     \item How is this measurement different from spectroscopic Lyman-alpha measurements?

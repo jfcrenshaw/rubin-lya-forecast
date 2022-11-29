@@ -2,11 +2,7 @@
 import pickle
 
 import matplotlib.pyplot as plt
-from showyourwork.paths import user as Paths
-from utils import plot_metric
-
-# instantiate the paths
-paths = Paths()
+from utils import paths, plot_metric
 
 # load the saved sigma_du's
 with open(paths.data / "sigma_du.pkl", "rb") as file:

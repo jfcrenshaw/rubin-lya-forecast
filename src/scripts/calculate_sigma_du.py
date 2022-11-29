@@ -3,49 +3,21 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from pzflow import FlowEnsemble
-from showyourwork.paths import user as Paths
-from utils import sample_with_errors
+from utils import load_ensemble, paths, sample_with_errors
 
-# instantiate the paths
-paths = Paths()
-
-# load the flow ensembles
-model_dir = paths.data / "models"
-flow_ensembles = {
-    "lsst": FlowEnsemble(file=model_dir / "lsst_ensemble.pzflow.pkl"),
-    "lsst+euclid": FlowEnsemble(file=model_dir / "lsst+euclid_ensemble.pzflow.pkl"),
-    "lsst+roman": FlowEnsemble(file=model_dir / "lsst+roman_ensemble.pzflow.pkl"),
-    "perfect": FlowEnsemble(file=model_dir / "lsst+roman_ensemble.pzflow.pkl"),
-}
-
-# directory where the background catalogs are saved
-bg_dir = paths.data / "background_catalogs"
-
-# and a dictionary to store the sigma_du values
+# create a dictionary to store the sigma_du values
 sigma_du_dict = {}
 
 # loop over the background catalogs
-for file in bg_dir.glob("*.pkl"):
-    stem = str(file.stem).removesuffix("_bg")
-    print("calculating sigma_du for", stem)
+for file in paths.bg.glob("*.pkl"):
+    name = str(file.stem).removesuffix("_bg")
+    print("calculating sigma_du for", name)
 
     # load the catalog
     catalog = pd.read_pickle(file)
 
-    # select the correct flow ensemble
-    if "euclid" in stem:
-        name = "euclid"
-        ensemble = flow_ensembles["lsst+euclid"]
-    elif "roman" in stem:
-        name = "roman"
-        ensemble = flow_ensembles["lsst+roman"]
-    elif "perfect" in stem:
-        name = "perfect"
-        ensemble = flow_ensembles["perfect"]
-    else:
-        name = int(stem[5:])  # type: ignore
-        ensemble = flow_ensembles["lsst"]
+    # and the flow ensemble
+    ensemble = load_ensemble(name)
 
     # draw samples from the ensemble
     z_samples, u_samples = sample_with_errors(catalog, ensemble, seed=0)
@@ -63,8 +35,8 @@ for file in bg_dir.glob("*.pkl"):
     fluxes = fluxes[:, None] + flux_errs[:, None] * eps
 
     # add a flux floor to avoid infinite magnitudes
-    # this flux corresponds to a max magnitude of 30
-    fluxes = np.clip(fluxes, 1e-20, None)
+    # this flux corresponds to a max magnitude of 40
+    fluxes = np.clip(fluxes, 1e-16, None)
 
     # convert back to magnitudes
     u_alpha = -2.5 * np.log10(fluxes)
@@ -73,22 +45,19 @@ for file in bg_dir.glob("*.pkl"):
     du_samples = u_alpha - u_samples
 
     # get the mean for each galaxy
-    du_samples = np.nanmean(du_samples, axis=1)
+    du_samples = np.nanmedian(du_samples, axis=1)
 
     # calculate sigma_du from the standard deviation of the du_samples
-    sigma_du = np.nanstd(du_samples)
+    q75, q25 = np.nanpercentile(du_samples, [75, 25])
+    iqr = q75 - q25
+    sigma_du = iqr / 1.35
+
+    print(np.nanmedian(du_samples), "+/-", sigma_du / np.sqrt(du_samples.size))
+    print(
+        (np.nanmedian(du_samples) - 0.20548664) / (sigma_du / np.sqrt(du_samples.size))
+    )
 
     sigma_du_dict[name] = sigma_du
-
-
-# sort the dictionary
-euclid_sigma_du = sigma_du_dict.pop("euclid")
-roman_sigma_du = sigma_du_dict.pop("roman")
-perfect_sigma_du = sigma_du_dict.pop("perfect")
-sigma_du_dict = dict(sorted(sigma_du_dict.items()))
-sigma_du_dict["euclid"] = euclid_sigma_du
-sigma_du_dict["roman"] = roman_sigma_du
-sigma_du_dict["perfect"] = perfect_sigma_du
 
 # save the likelihood dictionary
 with open(paths.data / "sigma_du.pkl", "wb") as file:

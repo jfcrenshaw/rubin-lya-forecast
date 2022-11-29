@@ -1,10 +1,8 @@
 from typing import Union
 
 import numpy as np
-from showyourwork.paths import user as Paths
 
-# instantiate the paths
-paths = Paths()
+from .paths import paths
 
 # wavelength of the Lyman-alpha transition
 LYMAN_WAVELEN = 1215.67  # Angstroms
@@ -22,9 +20,7 @@ class Bandpass:
             The name of the bandpass to load.
         """
         # load the raw bandpass
-        wavelen, R = np.loadtxt(
-            paths.data / "bandpasses" / f"{band}_bandpass.dat", unpack=True
-        )
+        wavelen, R = np.loadtxt(paths.bandpasses / f"{band}_bandpass.dat", unpack=True)
 
         # nm -> angstroms
         wavelen *= 10

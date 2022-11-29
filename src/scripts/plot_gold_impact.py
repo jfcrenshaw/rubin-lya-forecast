@@ -1,12 +1,8 @@
 """Make a plot that shows how Lya scattering impacts the gold sample."""
 import matplotlib.pyplot as plt
 import numpy as np
-from showyourwork.paths import user as Paths
-from utils import load_truth_catalog, lya_decrement
+from utils import load_truth_catalog, lya_decrement, paths
 from utils.error_models import LSSTErrorModel
-
-# instantiate the paths
-paths = Paths()
 
 # setup the redshift grid
 zs = np.linspace(1.63, 3.5, 100)

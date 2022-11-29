@@ -1,33 +1,26 @@
 """Calculate metrics for the photo-z cuts."""
 import pickle
-from pathlib import PosixPath
+from pathlib import Path
 from typing import Dict, Union
 
 import numpy as np
 import pandas as pd
-from showyourwork.paths import user as Paths
-from utils import load_truth_catalog
+from utils import paths
 from utils.survey_areas import A_RATIO_EUCLID, A_RATIO_ROMAN
-
-# instantiate the paths
-paths = Paths()
-
-# directories where the catalogs are saved
-catalog_dir = paths.data / "observed_catalogs"
-bg_dir = paths.data / "background_catalogs"
-fg_dir = paths.data / "foreground_catalogs"
 
 # define scaling variable for calculating projected sample size
 # the lsst_scale scales sim's gold sample -> projected lsst gold sample
-lsst_scale = 3.11e9 / load_truth_catalog().query("i < 25.3").shape[0]
+N_projected_gold = 3.11e9
+N_simulated_gold = pd.read_pickle(paths.obs / "lsstY10.pkl").query("i < 25.3").shape[0]
+lsst_scale = N_projected_gold / N_simulated_gold
 
 
-def calculate_metrics(dir: PosixPath, query: str) -> dict:
+def calculate_metrics(dir: Path, query: str) -> dict:
     """Calculate the metrics for this photo-z sample.
 
     Parameters
     ----------
-    dir : PosixPath
+    dir : Path
         The path to the photo-z selected samples.
     query : str
         The query corresponding to the cut on true redshifts.
@@ -42,7 +35,7 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
     completeness_dict: Dict[Union[int, str], float] = {}
     size_dict: Dict[Union[int, str], float] = {}
 
-    for file in catalog_dir.glob("*.pkl"):
+    for file in paths.obs.glob("*.pkl"):
         # load the catalogs
         full_catalog = pd.read_pickle(file)
         cut_catalog = pd.read_pickle(list(dir.glob(file.stem + "_*.pkl"))[0])
@@ -54,43 +47,22 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
         completeness = np.isin(true, pred, assume_unique=True).mean()
         size = lsst_scale * pred.size
 
-        # save the metrics from this file
+        # rescale the size for NIR catalogs
         if "euclid" in file.stem:
-            euclid_purity = purity
-            euclid_completeness = completeness
-            euclid_size = A_RATIO_EUCLID * size
+            size *= A_RATIO_EUCLID
         elif "roman" in file.stem:
-            roman_purity = purity
-            roman_completeness = completeness
-            roman_size = A_RATIO_ROMAN * size
-        elif "perfect" in file.stem:
-            perfect_purity = purity
-            perfect_completeness = completeness
-            perfect_size = size
-        else:
-            year = int(file.stem[5:])
-            purity_dict[year] = purity
-            completeness_dict[year] = completeness
-            size_dict[year] = size
+            size *= A_RATIO_ROMAN
 
-    # sort each dictionary and add the euclid and roman numbers at the end
-    purity_dict = dict(sorted(purity_dict.items()))
-    purity_dict["euclid"] = euclid_purity
-    purity_dict["roman"] = roman_purity
-    purity_dict["perfect"] = perfect_purity
+        purity_dict[file.stem] = purity
+        completeness_dict[file.stem] = completeness
+        size_dict[file.stem] = size
 
-    completeness_dict = dict(sorted(completeness_dict.items()))
-    completeness_dict["euclid"] = euclid_completeness
-    completeness_dict["roman"] = roman_completeness
-    completeness_dict["perfect"] = perfect_completeness
-
-    size_dict = dict(sorted(size_dict.items()))
-    size_dict["euclid"] = euclid_size
-    size_dict["roman"] = roman_size
-    size_dict["Y10+euclid+roman"] = (
-        (1 - A_RATIO_EUCLID - A_RATIO_ROMAN) * size_dict[10] + euclid_size + roman_size
+    # save a size for the combined catalog
+    size_dict["lsstY10+both"] = (
+        (1 - A_RATIO_EUCLID - A_RATIO_ROMAN) * size_dict["lsstY10"]
+        + size_dict["lsstY10+euclid"]
+        + size_dict["lsstY10+roman"]
     )
-    size_dict["perfect"] = perfect_size
 
     # package all the metrics in a single dictionary
     metrics = {
@@ -103,11 +75,11 @@ def calculate_metrics(dir: PosixPath, query: str) -> dict:
 
 
 # calculate the metrics for the background sample
-bg_metrics = calculate_metrics(bg_dir, "redshift > 2.36")
+bg_metrics = calculate_metrics(paths.bg, "redshift > 2.36")
 with open(paths.data / "photoz_metrics_bg.pkl", "wb") as file:
     pickle.dump(bg_metrics, file)
 
 # calculate the metrics for the foreground sample
-fg_metrics = calculate_metrics(fg_dir, "(redshift > 1.63) & (redshift < 2.36)")
+fg_metrics = calculate_metrics(paths.fg, "(redshift > 1.63) & (redshift < 2.36)")
 with open(paths.data / "photoz_metrics_fg.pkl", "wb") as file:
     pickle.dump(fg_metrics, file)

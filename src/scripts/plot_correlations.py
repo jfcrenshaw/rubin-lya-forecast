@@ -3,10 +3,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-from showyourwork.paths import user as Paths
-
-# instantiate the paths
-paths = Paths()
+from utils import paths
 
 # laod the correlations
 with open(paths.data / "correlations.pkl", "rb") as file:

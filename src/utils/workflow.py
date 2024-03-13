@@ -375,6 +375,30 @@ class Workflow:
 
         return status
 
+    def _check_output_exists(self, stage_name: str, output: str | Path | list) -> None:
+        """Check that the outputs of the stage exist.
+
+        Parameters
+        ----------
+        stage_name : str
+            The name of the stage
+        output : str or path or list
+            File or list of files to check.
+        """
+        # Recurse for lists of outputs
+        if isinstance(output, (tuple, list)):
+            for file in output:
+                self._check_output_exists(file)
+            return
+
+        # Make sure the output is a Path object
+        output = Path(output)
+
+        if not output.exists():
+            raise RuntimeError(
+                f"Stage '{stage_name}' completed but output '{output}' is missing!"
+            )
+
     def run_stages(self) -> None:
         """Run all the stages."""
         # Query stage status
@@ -435,8 +459,14 @@ class Workflow:
             # Run the stage
             stage["function"](output=stage["output"], **stage["kwargs"])
 
+            # Check that the outputs now exist
+            self._check_output_exists(name, stage["output"])
+
+            # Cache the results
             if stage["cache"]:
                 self._cache_output(stage["output"])
 
             # Save this stage in the list of run stages
             rerun_stages.append(name)
+
+        print("Workflow completed!")

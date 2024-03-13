@@ -28,5 +28,20 @@ workflow.add_stage(
     paths.figures / "increments.pdf",
 )
 
+workflow.add_stage(
+    "create catalogs",
+    create_catalogs,
+    [
+        paths.catalogs / "truth_catalog.parquet",
+        paths.catalogs / "y1_catalog.parquet",
+        paths.catalogs / "y5_catalog.parquet",
+        paths.catalogs / "y10+euclid_catalog.parquet",
+        paths.catalogs / "y10+roman_catalog.parquet",
+    ],
+    cache=True,
+    seeds=[1, 5, 10, 11, 12],
+)
+
+
 # Run the command-line interface
 workflow.cli()

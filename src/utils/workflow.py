@@ -560,7 +560,7 @@ class Workflow:
 
         return status
 
-    def run_stages(self) -> None:
+    def run(self) -> None:
         """Run the workflow."""
         # Query stage status
         status = self.query_stages()
@@ -610,6 +610,8 @@ class Workflow:
 
             # If we get this far, we need to run the stage
             # First we will print why the stage is being run
+            if not status[name]["local"] and not status[name]["cache"]:
+                print(f"Running '{name}' because the output does not exist.")
             elif status[name]["newest"] == "stage":
                 print(f"Running '{name}' because the stage changed")
             elif dep_rerun:
@@ -684,10 +686,10 @@ class Workflow:
 
         # Command to run stages
         @app.command()
-        def run_stages() -> None:
-            self.run_stages()
+        def run() -> None:
+            self.run()
 
-        run_stages.__doc__ = self.run_stages.__doc__.replace("\n\n", "\n\n\b")
+        run.__doc__ = self.run.__doc__.replace("\n\n", "\n\n\b")
 
         # Run CLI
         app()

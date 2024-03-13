@@ -13,6 +13,20 @@ import github_release
 
 
 class Workflow:
+    """Class that defines an analysis workflow.
+
+    Workflows can be defined by instantiating the workflow, then
+    calling add_stage. For example,
+        workflow = Workflow()
+        workflow.add_stage(
+            name="Stage 1",
+            function=make_plot,
+            output="cool_plot.pdf",
+        )
+
+    Note the workflow tries to be smart about not re-running rules
+    and downloading cached outputs from Github releases.
+    """
 
     def __init__(self) -> None:
         # Create an empty list of stages
@@ -47,7 +61,13 @@ class Workflow:
             self._catch_cache_error(reset=True)
 
     def _catch_cache_error(self, reset: bool = False) -> None:
-        """Print error message for cache failure."""
+        """Print error message for cache failure.
+
+        Parameters
+        ----------
+        reset : bool, default=False
+            Whether to reset the github-related attributes to None.
+        """
         warnings.warn(
             "Failed to connect to remote cache. "
             "This could be due to any number of reasons including lack "
@@ -85,8 +105,20 @@ class Workflow:
         except Exception:
             self._catch_cache_error(reset=True)
 
-    def _get_cache_time(self, output: str | Path) -> None:
-        """Get the timestamp at which this object was cached."""
+    def _get_cache_time(self, output: str | Path) -> float:
+        """Get the timestamp at which this object was cached.
+
+        Parameters
+        ----------
+        output : str or Path
+            The output file for which to search the cache and return
+            a cache time. If the file is not found, -99 is returned.
+
+        Returns
+        -------
+        float
+            The cache time in seconds. This is a Unix timestamp.
+        """
         # If there is a known cache error, don't even try
         if self._cache_error:
             return -99
@@ -103,7 +135,13 @@ class Workflow:
             return -99
 
     def _cache_output(self, output: str | Path | list) -> None:
-        """Cache the output."""
+        """Cache the output.
+
+        Parameters
+        ----------
+        output : str or Path or list
+            File or list of files to cache
+        """
         # If there is a known cache error, don't try to cache anymore
         if self._cache_error:
             return
@@ -157,7 +195,13 @@ class Workflow:
             self._catch_cache_error()
 
     def _download_cached_output(self, output: str | Path | list) -> None:
-        """Download the cached output."""
+        """Download the cached output.
+
+        Parameters
+        ----------
+        output : str or path or list
+            File or list of files to download from the cache.
+        """
         # Recurse for lists of outputs
         if isinstance(output, (tuple, list)):
             for file in output:
@@ -190,16 +234,17 @@ class Workflow:
     ) -> None:
         """Add a stage to the workflow.
 
-        Note the stages are run in the order they are added and they may
-        be order dependent.
+        Note stages are run in the order in which they are added to the
+        workflow. This order might be important! For example, you can
+        only list already-added stages in the `dependencies`.
 
         Parameters
         ----------
         name : str
             The name of the stage.
         function : Callable or None
-            The function that defines the stage. This function must take
-            the `output` keyword. Can also be None, in which case the output
+            Function that defines the stage. This function must take the
+            `output` keyword. Can also be None, in which case the output
             must be retrievable either from the local path or from the cache.
         output : str or Path or list
             The file(s) that are created by the stage.
@@ -210,7 +255,7 @@ class Workflow:
         **kwargs
             Any other keywords to pass to the function.
         """
-        # Check that the name is unique:
+        # Check the name is unique:
         for stage in self.stages:
             if stage["name"] == name:
                 raise ValueError(f"There is more than one stage with the name {name}.")
@@ -232,6 +277,7 @@ class Workflow:
                     "Remember that the order in which you add stages does matter!"
                 )
 
+        # Add the stage to the list
         self.stages.append(
             {
                 "name": name,
@@ -244,12 +290,20 @@ class Workflow:
         )
 
     def query_stages(self) -> dict:
-        """Determine which stages need to be run.
+        """Query current status of every stage.
+
+        This is used to determine which stages need to be run.
 
         Returns
         -------
         dict
-            Dictionary of bools indicating whether each stage needs to be run.
+            Dictionary containing, for each stage:
+            - "local": Whether the stage outputs exist locally
+            - "cache": Whether the stage outputs exist in the cache
+            - "newest": Which item is the newest (one of "local", "cache", "stage").
+                If "stage" is the newest, that means the function that defines the
+                stage has been updated more recently than the corresponding outputs,
+                so the rule needs to be re-run.
         """
         # Create nested dictionary for every stage
         status = {stage["name"]: {} for stage in self.stages}

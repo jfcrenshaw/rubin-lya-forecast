@@ -17,7 +17,7 @@ workflow.add_stage(
         paths.inputs / "u_bandpass.dat",
         paths.inputs / "g_bandpass.dat",
         paths.inputs / "r_bandpass.dat",
-        paths.inputs / "truth_catalog.parquet",
+        paths.inputs / "input_catalog.parquet",
     ],
     cache=True,
 )

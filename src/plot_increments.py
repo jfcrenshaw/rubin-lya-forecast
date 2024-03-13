@@ -1,14 +1,12 @@
 """Plot the Lyman-alpha band increments."""
 
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .utils import lya_increment
 
 
-def plot_increments(output: Path) -> dict:
+def plot_increments(output: str) -> None:
     """Plot the Lyman-alpha band increments."""
     # Set the redshift grid
     zs = np.linspace(1.6, 2.4, 1000)

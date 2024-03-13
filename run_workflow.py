@@ -27,5 +27,4 @@ workflow.add_stage(
 
 
 if __name__ == "__main__":
-    print(workflow.query_stages())
     workflow.run_stages()

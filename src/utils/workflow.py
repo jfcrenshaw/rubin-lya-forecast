@@ -1,13 +1,15 @@
 """Define the workflow class"""
 
+import contextlib
 import inspect
+import os
+import warnings
+from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
 import git
 import github_release
-import warnings
-from datetime import datetime
 
 
 class Workflow:
@@ -41,7 +43,7 @@ class Workflow:
                 self.cache_tag,
             )
             self._cache_error = False
-        except:
+        except Exception:
             self._catch_cache_error(reset=True)
 
     def _catch_cache_error(self, reset: bool = False) -> None:
@@ -51,7 +53,8 @@ class Workflow:
             "This could be due to any number of reasons including lack "
             "of internet connection, improper credentials, "
             "or non-existent Github repository. "
-            "We will continue without the remote cache."
+            "We will continue without the remote cache.",
+            stacklevel=1,
         )
         self._cache_error = True
         if reset:
@@ -79,7 +82,7 @@ class Workflow:
                     tag_name=self.cache_tag,
                 )
             self._cache_error = False
-        except:
+        except Exception:
             self._catch_cache_error(reset=True)
 
     def _get_cache_time(self, output: str | Path) -> None:
@@ -96,7 +99,7 @@ class Workflow:
                 output.name,
             )
             return datetime.fromisoformat(info["updated_at"]).timestamp()
-        except:
+        except Exception:
             return -99
 
     def _cache_output(self, output: str | Path | list) -> None:
@@ -127,12 +130,30 @@ class Workflow:
         # Otherwise we need to cache the output in an asset
         try:
             print(f"Caching '{output}'")
-            github_release.gh_asset_upload(
-                self.github_name,
-                self.cache_tag,
-                str(output),
-            )
-        except:
+
+            # Get lists of assets
+            asset_names = [
+                asset["name"]
+                for asset in github_release.get_assets(self.github_name, self.cache_tag)
+            ]
+
+            # If this asset is already in the cache, we must delete it first
+            if output.name in asset_names:
+                with contextlib.redirect_stdout(None):
+                    github_release.gh_asset_delete(
+                        self.github_name,
+                        self.cache_tag,
+                        output.name,
+                    )
+
+            # Now upload the asset
+            with contextlib.redirect_stdout(None):
+                github_release.gh_asset_upload(
+                    self.github_name,
+                    self.cache_tag,
+                    str(output),
+                )
+        except Exception:
             self._catch_cache_error()
 
     def _download_cached_output(self, output: str | Path | list) -> None:
@@ -147,11 +168,16 @@ class Workflow:
         output = Path(output)
 
         # Download the cached output
-        github_release.gh_asset_download(
-            self.github_name,
-            self.cache_tag,
-            str(output.name),
-        )
+        with contextlib.chdir(output.parent), contextlib.redirect_stdout(None):
+            github_release.gh_asset_download(
+                self.github_name,
+                self.cache_tag,
+                str(output.name),
+            )
+
+        # Set the last modified time of the downloaded file to match the cache
+        cache_time = self._get_cache_time(output)
+        os.utime(output, times=(cache_time, cache_time))
 
     def add_stage(
         self,
@@ -319,7 +345,7 @@ class Workflow:
                 try:
                     self._download_cached_output(stage["output"])
                     continue
-                except:
+                except Exception:
                     print(
                         f"Failed to download output for '{name}' from the cache. "
                         "We will proceed without the cache."

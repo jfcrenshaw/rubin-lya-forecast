@@ -25,6 +25,5 @@ workflow.add_stage(
     paths.figures / "increments.pdf",
 )
 
-
-if __name__ == "__main__":
-    workflow.run_stages()
+# Run the command-line interface
+workflow.cli()

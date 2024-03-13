@@ -10,6 +10,8 @@ from typing import Callable
 
 import git
 import github_release
+import typer
+from rich import print
 
 
 class Workflow:
@@ -40,73 +42,64 @@ class Workflow:
         gh_url = self.git_repo.remotes.origin.url
         self.github_name = gh_url.removeprefix("git@github.com:").removesuffix(".git")
 
-        # Check github repo exists, and if it does target the latest release
-        try:
-            # All releases
-            releases = github_release.get_releases(self.github_name)
+        # Start with an empty cache tag
+        self.cache_tag = None
+        self._tried_cache = False
+        self._cache_error = False
 
-            # If there are no releases, default to v1
-            if len(releases) == 0:
+        # Default to not verbose
+        self.verbose = False
+
+    def _connect_to_cache(self) -> None:
+        """Connect to the remote cache."""
+        # We will only run this once per session
+        if self._tried_cache:
+            return
+
+        self._tried_cache = True
+        try:
+            # Get the list of all releases
+            releases = github_release.get_releases(self.github_name)
+            tags = [rel["tag_name"] for rel in releases]
+
+            # If the tag is None and releases exist, default to most recent release
+            if self.cache_tag is None and len(releases) > 0:
+                self.cache_tag = tags[0]
+
+            # If tag is still None, create default v1 tag
+            if self.cache_tag is None:
+                if self.verbose:
+                    print("No releases exist in cache. Creating release v1.")
                 github_release.gh_release_create(
                     self.github_name,
                     name="v1",
                     tag_name="v1",
                 )
-
-            # Select the most recent release
-            self.cache_tag = releases[0]["tag_name"]
-            self.github_release = github_release.get_release(
-                self.github_name,
-                self.cache_tag,
-            )
-            self._cache_error = False
-        except Exception:
-            self._catch_cache_error(reset=True)
-
-    def _catch_cache_error(self, reset: bool = False) -> None:
-        """Print error message for cache failure.
-
-        Parameters
-        ----------
-        reset : bool, default=False
-            Whether to reset the github-related attributes to None.
-        """
-        warnings.warn(
-            "Failed to connect to remote cache. "
-            "This could be due to any number of reasons including lack "
-            "of internet connection, improper credentials, "
-            "or non-existent Github repository. "
-            "We will continue without the remote cache.",
-            stacklevel=1,
-        )
-        self._cache_error = True
-        if reset:
-            self.cache_tag = None
-            self.github_release = None
-
-    def target_cache_tag(self, tag: str) -> None:
-        """Target a specific Github release for the remote cache.
-
-        Parameters
-        ----------
-        tag : str
-            The Github release tag to target for the remote cache.
-        """
-        try:
-            self.cache_tag = tag
-            self.github_release = github_release.get_release(
-                self.github_name,
-                self.cache_tag,
-            )
-            if self.github_release is None:
+            # Otherwise if the tag is not in the list of releases, create release
+            elif self.cache_tag not in tags:
                 github_release.gh_release_create(
                     self.github_name,
                     name=self.cache_tag,
                     tag_name=self.cache_tag,
                 )
-            self._cache_error = False
-        except Exception:
-            self._catch_cache_error(reset=True)
+
+            print(f"Using cache tag '{self.cache_tag}'")
+
+        except Exception as exc:
+            # Print the exception
+            if self.verbose:
+                print(exc)
+
+            # We will proceed without the cache
+            warnings.warn(
+                "Failed to connect to remote cache. "
+                "This could be due to any number of reasons including lack "
+                "of internet connection, improper credentials, "
+                "or non-existent Github repository. "
+                "We will continue without the remote cache.",
+                stacklevel=1,
+            )
+            self._cache_error = True
 
     def _get_cache_time(self, output: str | Path) -> float:
         """Get the timestamp at which this object was cached.
@@ -122,6 +115,8 @@ class Workflow:
         float
             The cache time in seconds. This is a Unix timestamp.
         """
+        self._connect_to_cache()
+
         # If there is a known cache error, don't even try
         if self._cache_error:
             return -99
@@ -145,6 +140,8 @@ class Workflow:
         output : str or Path or list
             File or list of files to cache
         """
+        self._connect_to_cache()
+
         # If there is a known cache error, don't try to cache anymore
         if self._cache_error:
             return
@@ -195,7 +192,7 @@ class Workflow:
                     str(output),
                 )
         except Exception:
-            self._catch_cache_error()
+            pass
 
     def _download_cached_output(self, output: str | Path | list) -> None:
         """Download the cached output.
@@ -205,6 +202,11 @@ class Workflow:
         output : str or path or list
             File or list of files to download from the cache.
         """
+        self._connect_to_cache()
+
+        if self._cache_error:
+            raise RuntimeError("Cannot connect to cache.")
+
         # Recurse for lists of outputs
         if isinstance(output, (tuple, list)):
             for file in output:
@@ -225,6 +227,30 @@ class Workflow:
         # Set the last modified time of the downloaded file to match the cache
         cache_time = self._get_cache_time(output)
         os.utime(output, times=(cache_time, cache_time))
+
+    def _check_output_exists(self, stage_name: str, output: str | Path | list) -> None:
+        """Check that the outputs of the stage exist.
+
+        Parameters
+        ----------
+        stage_name : str
+            The name of the stage
+        output : str or path or list
+            File or list of files to check.
+        """
+        # Recurse for lists of outputs
+        if isinstance(output, (tuple, list)):
+            for file in output:
+                self._check_output_exists(file)
+            return
+
+        # Make sure the output is a Path object
+        output = Path(output)
+
+        if not output.exists():
+            raise RuntimeError(
+                f"Stage '{stage_name}' completed but output '{output}' is missing!"
+            )
 
     def add_stage(
         self,
@@ -375,32 +401,8 @@ class Workflow:
 
         return status
 
-    def _check_output_exists(self, stage_name: str, output: str | Path | list) -> None:
-        """Check that the outputs of the stage exist.
-
-        Parameters
-        ----------
-        stage_name : str
-            The name of the stage
-        output : str or path or list
-            File or list of files to check.
-        """
-        # Recurse for lists of outputs
-        if isinstance(output, (tuple, list)):
-            for file in output:
-                self._check_output_exists(file)
-            return
-
-        # Make sure the output is a Path object
-        output = Path(output)
-
-        if not output.exists():
-            raise RuntimeError(
-                f"Stage '{stage_name}' completed but output '{output}' is missing!"
-            )
-
     def run_stages(self) -> None:
-        """Run all the stages."""
+        """Run the workflow."""
         # Query stage status
         status = self.query_stages()
 
@@ -470,3 +472,33 @@ class Workflow:
             rerun_stages.append(name)
 
         print("Workflow completed!")
+
+    def cli(self) -> None:
+        """Create command-line interface for the workflow."""
+        # Create a Typer app
+        app = typer.Typer(add_completion=False, no_args_is_help=True)
+
+        # Add global options
+        @app.callback()
+        def main(verbose: bool = False):
+            """Command line interface for a workflow"""
+            self.verbose = verbose
+
+        # Define function to print the stage query
+        @app.command()
+        def query_stages():
+            status = self.query_stages()
+            for stage in status:
+                print(f"'{stage}' : {status[stage]}")
+
+        query_stages.__doc__ = self.query_stages.__doc__.replace("\n\n", "\n\n\b")
+
+        # Define function to run stages
+        @app.command()
+        def run_stages():
+            self.run_stages()
+
+        run_stages.__doc__ = self.run_stages.__doc__.replace("\n\n", "\n\n\b")
+
+        # Run CLI
+        app()

@@ -16,6 +16,7 @@ dependencies:
   - pyccl
   - python=3.11
   - seaborn
+  - typer
   - pip:
       - githubrelease
       - photerr

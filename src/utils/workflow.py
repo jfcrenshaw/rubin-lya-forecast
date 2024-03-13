@@ -356,12 +356,12 @@ class Workflow:
             if not status[name]["local"] and not status[name]["cache"]:
                 status[name]["newest"] = "stage"
             elif status[name]["local"] and not status[name]["cache"]:
-                if local_mt > stage_mt:
+                if local_mt >= stage_mt:
                     status[name]["newest"] = "local"
                 else:
                     status[name]["newest"] = "stage"
             elif not status[name]["local"] and status[name]["cache"]:
-                if cache_mt > stage_mt:
+                if cache_mt >= stage_mt:
                     status[name]["newest"] = "cache"
                 else:
                     status[name]["newest"] = "stage"

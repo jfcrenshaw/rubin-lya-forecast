@@ -64,6 +64,26 @@ class Workflow:
         else:
             return contextlib.redirect_stdout(None)
 
+    def _prep_output_destination(self, output: str | Path | list) -> None:
+        """Create the output parent directory if it does not exist."""
+        # Recurse for lists of outputs
+        if isinstance(output, (tuple, list)):
+            for file in output:
+                self._prep_output_destination(file)
+            return
+
+        # Make sure the output is a Path object
+        output = Path(output)
+
+        # If the parent directory exists, we can move on
+        if output.parent.exists():
+            return
+
+        # Otherwise create the parent directory
+        if self.verbose:
+            print(f"Creating parent directory for output '{output}'")
+        output.parent.mkdir(parents=True)
+
     @staticmethod
     def _no_connection_warning() -> None:
         """Warn about the lack of cache connection."""
@@ -244,8 +264,11 @@ class Workflow:
         # Make sure the output is a Path object
         output = Path(output)
 
+        # Make sure the output parent directory exists
+        self._prep_output_destination(output)
+
         # Download the cached output
-        with contextlib.chdir(output.parent), contextlib.redirect_stdout(None):
+        with contextlib.chdir(output.parent), self._get_print_context():
             github_release.gh_asset_download(
                 self.github_name,
                 self.cache_tag,
@@ -617,7 +640,10 @@ class Workflow:
             elif dep_rerun:
                 print(f"Running '{name}' because a dependency changed")
             else:
-                raise RuntimeError("Edge case in the run_stages logic!")
+                raise RuntimeError("Edge case in run logic!")
+
+            # Make sure the output parent directory exists
+            self._prep_output_destination(stage["output"])
 
             # Run the stage
             stage["function"](output=stage["output"], **stage["kwargs"])

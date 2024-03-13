@@ -26,6 +26,9 @@ class Workflow:
 
     Note the workflow tries to be smart about not re-running rules
     and downloading cached outputs from Github releases.
+
+    Note for the Github cache to work, you must have a Github personal access
+    token saved under $GITHUB_TOKEN
     """
 
     def __init__(self) -> None:

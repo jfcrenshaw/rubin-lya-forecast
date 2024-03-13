@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  create_figures:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install mamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
+          environment-file: environment.yml
+          cache-environment: true
+
+      - name: Run workflow
+        run: python run_workflow.py
+
+      - name: Push results
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Auto-build
+          branch: build

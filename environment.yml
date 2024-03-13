@@ -1,0 +1,23 @@
+name: rubin-lya-forecast
+channels:
+  - conda-forge
+dependencies:
+  - black
+  - flake8
+  - flake8-bugbear
+  - flake8-simplify
+  - gitpython
+  - isort
+  - jupyterlab
+  - matplotlib
+  - mypy
+  - numpy
+  - pip
+  - pyccl
+  - pygithub
+  - python=3.11
+  - seaborn
+  - pip:
+      - githubrelease
+      - photerr
+      - pzflow

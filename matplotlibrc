@@ -1,0 +1,21 @@
+# Enforce a non-interactive backend
+backend: agg
+
+# set font to match LaTeX's Computer Modern
+font.family: serif
+font.serif: cmr10
+mathtext.fontset: cm
+axes.formatter.use_mathtext: True  # needed when using cm=cmr10 for normal text
+
+# set font sizes
+font.size: 9
+axes.titlesize: 9
+legend.fontsize: 9
+axes.labelsize: 9
+xtick.labelsize: 8
+ytick.labelsize: 8
+
+# color cycle from https://arxiv.org/abs/2107.02270
+# + almost black from
+# https://olgabotvinnik.com/blog/prettyplotlib-painlessly-create-beautiful-matplotlib/
+axes.prop_cycle: cycler("color", ["5790FC", "F89C20", "E42536", "964A8B", "9C9CA1", "7A21DD", "262626"])

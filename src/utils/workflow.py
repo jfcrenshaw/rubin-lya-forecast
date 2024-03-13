@@ -6,10 +6,11 @@ import os
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
+from typing import Callable, ContextManager
 
 import git
 import github_release
+import humanize
 import typer
 from rich import print
 
@@ -37,69 +38,95 @@ class Workflow:
         # Create an empty list of stages
         self.stages = []
 
-        # Get the Github name
+        # Get git and github info
         self.git_repo = git.Repo(".")
         gh_url = self.git_repo.remotes.origin.url
         self.github_name = gh_url.removeprefix("git@github.com:").removesuffix(".git")
 
         # Start with an empty cache tag
         self.cache_tag = None
-        self._tried_cache = False
-        self._cache_error = False
+        self._cache_tags = []
+        self._cache_connected = None
 
         # Default to not verbose
         self.verbose = False
 
+    def _get_print_context(self) -> ContextManager:
+        """Get the print context for the verbosity level.
+
+        Returns
+        -------
+        ContextManager
+            A context manager that hides print statements if self.verbose==False
+        """
+        if self.verbose:
+            return contextlib.nullcontext()
+        else:
+            return contextlib.redirect_stdout(None)
+
+    @staticmethod
+    def _no_connection_warning() -> None:
+        """Warn about the lack of cache connection."""
+        warnings.warn(
+            "Failed to connect to remote cache. "
+            "This could be due to any number of reasons including lack "
+            "of internet connection, improper credentials, "
+            "or non-existent Github repository.",
+            stacklevel=2,
+        )
+
     def _connect_to_cache(self) -> None:
         """Connect to the remote cache."""
         # We will only run this once per session
-        if self._tried_cache:
+        if self._cache_connected is not None:
             return
 
-        self._tried_cache = True
+        # Check we can connect to Github
         try:
-            # Get the list of all releases
-            releases = github_release.get_releases(self.github_name)
-            tags = [rel["tag_name"] for rel in releases]
+            github_release.get_refs(self.github_name)
+            self._cache_connected = True
+        except Exception as exc:
+            self._cache_connected = False
 
-            # If the tag is None and releases exist, default to most recent release
-            if self.cache_tag is None and len(releases) > 0:
-                self.cache_tag = tags[0]
-
-            # If tag is still None, create default v1 tag
+            # If no cache tag was provided, just return
             if self.cache_tag is None:
-                if self.verbose:
-                    print("No releases exist in cache. Creating release v1.")
-                github_release.gh_release_create(
-                    self.github_name,
-                    name="v1",
-                    tag_name="v1",
-                )
-            # Otherwise if the tag is not in the list of releases, create release
-            elif self.cache_tag not in tags:
+                return
+
+            # Otherwise we want to want about the lack of connection
+            if self.verbose:
+                print(exc)
+            self._no_connection_warning()
+            return
+
+        # Get list of existing cache tags
+        releases = github_release.get_releases(self.github_name)
+        tags = [rel["tag_name"] for rel in releases]
+
+        # If cache_tag not in list of existing tags, create new release
+        if self.cache_tag is None:
+            pass
+        elif self.cache_tag not in tags:
+            print(f"Creating new cache tag '{self.cache_tag}'")
+            with self._get_print_context():
                 github_release.gh_release_create(
                     self.github_name,
                     name=self.cache_tag,
                     tag_name=self.cache_tag,
                 )
+            tags = [self.cache_tag] + tags
+        # Otherwise use existing release
+        else:
+            print(f"Using existing cache tag '{self.cache_tag}'")
 
-            print(f"Using cache tag '{self.cache_tag}'")
+        # Save the list of cache tags
+        self._cache_tags = tags
 
-        except Exception as exc:
-            # Print the exception
-            if self.verbose:
-                print(exc)
+        # Print the cache info
+        if self.verbose:
+            self.query_cache(include_assets=False)
 
-            # We will proceed without the cache
-            warnings.warn(
-                "Failed to connect to remote cache. "
-                "This could be due to any number of reasons including lack "
-                "of internet connection, improper credentials, "
-                "or non-existent Github repository. "
-                "We will continue without the remote cache.",
-                stacklevel=1,
-            )
-            self._cache_error = True
+        # Add a blank line after cache info
+        print()
 
     def _get_cache_time(self, output: str | Path) -> float:
         """Get the timestamp at which this object was cached.
@@ -117,8 +144,8 @@ class Workflow:
         """
         self._connect_to_cache()
 
-        # If there is a known cache error, don't even try
-        if self._cache_error:
+        # If we are not connected to the cache, don't even try
+        if not self._cache_connected:
             return -99
 
         # Otherwise check if this asset exists in the cache and return timestamp
@@ -142,8 +169,8 @@ class Workflow:
         """
         self._connect_to_cache()
 
-        # If there is a known cache error, don't try to cache anymore
-        if self._cache_error:
+        # If we are not connected to the cache, don't even try
+        if not self._cache_connected:
             return
 
         # Recurse for lists of outputs
@@ -177,7 +204,7 @@ class Workflow:
 
             # If this asset is already in the cache, we must delete it first
             if output.name in asset_names:
-                with contextlib.redirect_stdout(None):
+                with self._get_print_context():
                     github_release.gh_asset_delete(
                         self.github_name,
                         self.cache_tag,
@@ -185,7 +212,7 @@ class Workflow:
                     )
 
             # Now upload the asset
-            with contextlib.redirect_stdout(None):
+            with self._get_print_context():
                 github_release.gh_asset_upload(
                     self.github_name,
                     self.cache_tag,
@@ -204,7 +231,8 @@ class Workflow:
         """
         self._connect_to_cache()
 
-        if self._cache_error:
+        # If we are not connected to the cache, don't even try
+        if not self._cache_connected:
             raise RuntimeError("Cannot connect to cache.")
 
         # Recurse for lists of outputs
@@ -251,6 +279,130 @@ class Workflow:
             raise RuntimeError(
                 f"Stage '{stage_name}' completed but output '{output}' is missing!"
             )
+
+    def get_existing_cache_tags(self, _cli_print: bool = False) -> list:
+        """Get list of existing cache tags.
+
+        Returns
+        -------
+        list
+            List of existing cache tags
+        """
+        self._connect_to_cache()
+        tags = self._cache_tags.copy()
+
+        if len(tags) == 0 and not self._cache_connected:
+            self._no_connection_warning()
+
+        if self.verbose or _cli_print:
+            print("Existing cache tags:")
+            print(tags)
+
+        return tags
+
+    def query_cache(
+        self,
+        include_assets: bool = True,
+        _cli_print: bool = False,
+    ) -> dict:
+        """Query the cache.
+
+        Parameters
+        ----------
+        include_assets : bool
+            Whether to include asset info.
+
+        Returns
+        -------
+        dict
+            Dictionary containing cache info
+        """
+        self._connect_to_cache()
+
+        # Get the cache info
+        if not self._cache_connected:
+            info = {}
+        else:
+            info = github_release.get_release_info(self.github_name, self.cache_tag)
+
+        # Remove asset info it it's not wanted
+        if not include_assets:
+            info.pop("assets")
+
+        # Print a nicely formatted summary of key information
+        if self.verbose or _cli_print:
+            try:
+                author = info["author"]["login"]
+            except Exception:
+                author = None
+            print(f"Release '{info.get('name')}' info")
+            print(f"  {'Tag name':<13}: {info.get('tag_name')}")
+            print(f"  {'ID':<13}: {info.get('id')}")
+            print(f"  {'Created':<13}: {info.get('created_at')}")
+            print(f"  {'Author':<13}: {author}")
+            print(f"  {'Is published':<13}: {not info.get('draft')}")
+            print(f"  {'URL':<13}: {info.get('html_url')}")
+
+            for i, asset in enumerate(info.get("assets", [])):
+                print()
+                print(f"  Asset #{i}")
+                print(f"    {'name':<8}: {asset['name']}")
+                print(f"    {'created':<8}: {asset['created_at']}")
+                print(f"    {'updated':<8}: {asset['updated_at']}")
+                print(f"    {'author':<8}: {asset['uploader']['login']}")
+                print(f"    {'size':<8}: {humanize.naturalsize(asset['size'])}")
+                print(f"    {'url':<8}: {asset['browser_download_url']}")
+
+        return info
+
+    def delete_cache(self, confirm: bool) -> None:
+        """Delete the cache saved under this tag.
+
+        Parameters
+        ----------
+        confirm : bool
+            A boolean that must be set to true in order to delete the cache.
+            This is to provide an extra safety check before deleting.
+        """
+        if not confirm:
+            print("Not deleting cache because confirm==False.")
+            return
+
+        self._connect_to_cache()
+        try:
+            print(f"Deleting cache with tag '{self.cache_tag}'")
+            with self._get_print_context():
+                github_release.gh_release_delete(self.github_name, self.cache_tag)
+            self._cache_tags.remove(self.cache_tag)
+        except Exception as exc:
+            if self.verbose:
+                print(exc)
+            print(f"Could not delete cache with tag '{self.cache_tag}'")
+
+    def delete_all_caches(self, confirm: bool) -> None:
+        """Delete all caches for this workflow.
+
+        Parameters
+        ----------
+        confirm : bool
+            A boolean that must be set to true in order to delete the cache.
+            This is to provide an extra safety check before deleting.
+        """
+        if not confirm:
+            print("Not deleting caches because confirm==False.")
+            return
+
+        self._connect_to_cache()
+        try:
+            print("Deleting all caches")
+            for tag in self.get_existing_cache_tags():
+                with self._get_print_context():
+                    github_release.gh_release_delete(self.github_name, tag)
+                self._cache_tags.remove(tag)
+        except Exception as exc:
+            if self.verbose:
+                print(exc)
+            print("Could not delete all caches")
 
     def add_stage(
         self,
@@ -318,7 +470,7 @@ class Workflow:
             }
         )
 
-    def query_stages(self) -> dict:
+    def query_stages(self, *, _cli_print: bool = False) -> dict:
         """Query current status of every stage.
 
         This is used to determine which stages need to be run.
@@ -399,6 +551,13 @@ class Workflow:
                 else:
                     status[name]["newest"] = "local"
 
+        # Print status
+        if self.verbose or _cli_print:
+            print("Stage status:")
+            for stage in status:
+                print(f"'{stage}': {status[stage]}")
+            print()
+
         return status
 
     def run_stages(self) -> None:
@@ -471,7 +630,7 @@ class Workflow:
             # Save this stage in the list of run stages
             rerun_stages.append(name)
 
-        print("Workflow completed!")
+        print("\nWorkflow completed!")
 
     def cli(self) -> None:
         """Create command-line interface for the workflow."""
@@ -484,18 +643,48 @@ class Workflow:
             """Command line interface for a workflow"""
             self.verbose = verbose
 
-        # Define function to print the stage query
+        # Command to list existing cache tags
         @app.command()
-        def query_stages():
-            status = self.query_stages()
-            for stage in status:
-                print(f"'{stage}' : {status[stage]}")
+        def get_existing_cache_tags(include_assets: bool = True):
+            self.get_existing_cache_tags(_cli_print=True)
+
+        get_existing_cache_tags.__doc__ = self.get_existing_cache_tags.__doc__.replace(
+            "\n\n", "\n\n\b"
+        )
+
+        # Command to delete cache
+        @app.command()
+        def delete_cache(confirm: bool) -> None:
+            self.delete_cache(confirm=confirm)
+
+        delete_cache.__doc__ = self.delete_cache.__doc__.replace("\n\n", "\n\n\b")
+
+        # Command to delete all caches
+        @app.command()
+        def delete_all_caches(confirm: bool) -> None:
+            self.delete_all_caches(confirm=confirm)
+
+        delete_all_caches.__doc__ = self.delete_all_caches.__doc__.replace(
+            "\n\n", "\n\n\b"
+        )
+
+        # Command to print cache query
+        @app.command()
+        def query_cache(include_assets: bool = True) -> None:
+            self.query_cache(include_assets=include_assets, _cli_print=True)
+
+        query_cache.__doc__ = self.query_cache.__doc__.replace("\n\n", "\n\n\b")
+
+        # Command to print stage query
+        @app.command()
+        def query_stages() -> None:
+            self.query_stages(_cli_print=True)
 
         query_stages.__doc__ = self.query_stages.__doc__.replace("\n\n", "\n\n\b")
 
-        # Define function to run stages
+        # Command to run stages
         @app.command()
-        def run_stages():
+        def run_stages() -> None:
             self.run_stages()
 
         run_stages.__doc__ = self.run_stages.__doc__.replace("\n\n", "\n\n\b")

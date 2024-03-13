@@ -6,6 +6,9 @@ from src.utils import Workflow, paths
 # Create the workflow
 workflow = Workflow()
 
+# Set the cache tag
+workflow.cache_tag = "v1"
+
 # Add stages to workflow
 workflow.add_stage(
     "download data",

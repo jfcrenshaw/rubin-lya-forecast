@@ -613,8 +613,10 @@ class Workflow:
                 except Exception:
                     print(
                         f"Failed to download output for '{name}' from the cache. "
-                        "We will proceed without the cache."
+                        "We will proceed without the cache and re-run the stage."
                     )
+                    status[name]["cache"] = False
+                    status[name]["newest"] = "stage"
 
             # If the local output is the newest version, skip this stage
             elif status[name]["newest"] == "local" and not dep_rerun:

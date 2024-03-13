@@ -14,7 +14,6 @@ dependencies:
   - numpy
   - pip
   - pyccl
-  - pygithub
   - python=3.11
   - seaborn
   - pip:

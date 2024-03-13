@@ -22,6 +22,7 @@ jobs:
           cache-environment: true
 
       - name: Run workflow
+        shell: bash -el {0}
         run: python run_workflow.py
 
       - name: Push results

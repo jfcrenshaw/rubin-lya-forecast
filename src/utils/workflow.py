@@ -292,7 +292,7 @@ class Workflow:
         # Recurse for lists of outputs
         if isinstance(output, (tuple, list)):
             for file in output:
-                self._check_output_exists(file)
+                self._check_output_exists(stage_name, file)
             return
 
         # Make sure the output is a Path object
@@ -636,7 +636,7 @@ class Workflow:
             # If we get this far, we need to run the stage
             # First we will print why the stage is being run
             if not status[name]["local"] and not status[name]["cache"]:
-                print(f"Running '{name}' because the output does not exist.")
+                print(f"Running '{name}' because the output does not exist")
             elif status[name]["newest"] == "stage":
                 print(f"Running '{name}' because the stage changed")
             elif dep_rerun:

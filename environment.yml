@@ -9,6 +9,8 @@ dependencies:
   - gitpython
   - humanize
   - isort
+  - jax
+  - jaxlib
   - jupyterlab
   - matplotlib
   - mypy
@@ -18,6 +20,7 @@ dependencies:
   - pyccl
   - python=3.11
   - seaborn
+  - scikit-learn
   - typer
   - pip:
       - githubrelease

@@ -35,11 +35,12 @@ workflow.add_stage(
         paths.catalogs / "truth_catalog.parquet",
         paths.catalogs / "y1_catalog.parquet",
         paths.catalogs / "y5_catalog.parquet",
-        paths.catalogs / "y10+euclid_catalog.parquet",
-        paths.catalogs / "y10+roman_catalog.parquet",
+        paths.catalogs / "y10_euclid_catalog.parquet",
+        paths.catalogs / "y10_roman_catalog.parquet",
     ],
     cache=True,
-    seeds=[1, 5, 10, 11, 12],
+    min_snr=10,
+    seed=1234,
 )
 
 

@@ -238,6 +238,10 @@ class Workflow:
                     self.cache_tag,
                     str(output),
                 )
+
+            # Set the last modified time of the downloaded file to match the cache
+            cache_time = self._get_cache_time(output)
+            os.utime(output, times=(cache_time, cache_time))
         except Exception:
             pass
 

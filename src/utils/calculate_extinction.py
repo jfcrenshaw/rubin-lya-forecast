@@ -162,9 +162,6 @@ def lya_increment(
     np.ndarray or float
         Lyman-alpha increments.
     """
-    # Make sure redshift is an array
-    z: np.ndarray = np.atleast_1d(redshift)
-
     # Load the bandpass
     bandpass = Bandpass(band)
 
@@ -172,25 +169,36 @@ def lya_increment(
     mean_sed = bandpass.wavelen**spectral_index
     bandpass.reweight_bandpass(bandpass.wavelen, mean_sed)
 
-    increments = []
-    for i in range(0, len(z), batch_size):
-        z_batch = z[i : i + batch_size]
+    # Get window where bandpass is non-zero
+    wavelen = bandpass.wavelen
+    R = bandpass.R(wavelen)
+    cumsum = np.cumsum(R[:-1] * np.diff(wavelen))
+    mask = (cumsum >= 1e-3) & (cumsum <= 1 - 1e-3)
+    wavelen = wavelen[:-1][mask]
+    R = R[:-1][mask]
 
-        # Get the redshift grid
-        z_grid = np.tile(bandpass.wavelen / LYMAN_WAVELEN - 1, (len(z_batch), 1))
+    # Convert bandpass wavelengths to redshift
+    z_bp = wavelen / LYMAN_WAVELEN - 1
 
-        # Calculate the transmission as a function of redshift
-        F_grid = F_bar(z_grid)
+    # Calculate transmission as a function of redshift
+    F_grid = F_bar(z_bp)
 
-        # Beyond the source redshift, set transmission = 1
-        F_grid[z_grid > z_batch[:, None]] = 1  # type: ignore
+    # Create the source redshift grid
+    dz = 0.01
+    z_sc = np.arange(z_bp.min(), z_bp.max(), dz)
 
-        # Convert the redshift grid to wavelength
-        wavelens = LYMAN_WAVELEN * (1 + z_grid)
+    # Tile bandpass arrays to match dimension of z_sc
+    z_bp = np.tile(z_bp, (z_sc.size, 1))
+    wavelen = np.tile(wavelen, (z_sc.size, 1))
+    R = np.tile(R, (z_sc.size, 1))
+    F_grid = np.tile(F_grid, (z_sc.size, 1))
 
-        # Calculate the increments
-        incr = -2.5 * np.log10(np.trapz(bandpass.R(wavelens) * F_grid, wavelens))
+    # Beyond source redshift, set transmission = 1
+    F_grid[z_bp > z_sc[:, None]] = 1
 
-        increments += list(incr)
+    # Calculate the increments
+    incr = -2.5 * np.log10(np.trapz(R * F_grid, wavelen))
+    incr = incr.squeeze() - incr.min()
 
-    return np.array(increments).squeeze()
+    # Finally, return increments at requested redshifts
+    return np.interp(redshift, z_sc, incr.squeeze())

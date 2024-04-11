@@ -1,17 +1,25 @@
 """Run all functions for analysis."""
 
-import jax
+# import jax
 
 from src import *
-from src.utils import Workflow, paths
+from src.utils import Workflow
 
-jax.config.update("jax_platform_name", "cpu")
+# jax.config.update("jax_platform_name", "cpu")
 
 # Create the workflow
 workflow = Workflow()
 
 # Set the cache tag
-workflow.cache_tag = "v1"
+workflow.cache_tag = "v2"
+
+# Define the paths where I will save things
+paths = workflow.paths
+paths.data = paths.root / "data"
+paths.inputs = paths.data / "inputs"
+paths.catalogs = paths.data / "catalogs"
+paths.models = paths.root / "models"
+paths.figures = paths.root / "figures"
 
 # Add stages to workflow
 workflow.add_stage(
@@ -28,13 +36,13 @@ workflow.add_stage(
 
 workflow.add_stage(
     "plot increments",
-    plot_increments,
+    PlotIncrements,
     paths.figures / "increments.pdf",
 )
 
 workflow.add_stage(
     "emulate input catalog",
-    emulate_input_catalog,
+    EumlateInputCatalog,
     [
         paths.models / "incat_emulator.pkl",
         paths.models / "incat_emulator_losses.pkl",
@@ -43,6 +51,7 @@ workflow.add_stage(
     seed=1,
 )
 
+"""
 workflow.add_stage(
     "create observed catalogs",
     create_observed_catalogs,
@@ -82,7 +91,8 @@ workflow.add_stage(
     epochs=[400, 50, 50],
     seed=3,
 )
+"""
 
-
-# Run the command-line interface
-workflow.cli()
+if __name__ == "__main__":
+    # Run the command-line interface
+    workflow.cli()

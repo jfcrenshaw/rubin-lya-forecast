@@ -1,18 +1,528 @@
 """Define the workflow class"""
 
 import contextlib
-import inspect
 import os
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, ContextManager
+from typing import ContextManager
 
 import git
 import github_release
 import humanize
 import typer
 from rich import print
+import numpy as np
+from abc import ABC, abstractmethod
+from types import SimpleNamespace
+from inspect import getfile
+
+
+class Stage(ABC):
+    """Abstract base class for workflow stages.
+
+    You must subclass and define the '_run' method.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        output: str | Path | list,
+        dependencies: str | list = None,
+        cache: bool = False,
+        paths: SimpleNamespace | None = None,
+        wf_vars: SimpleNamespace | None = None,
+        **kwargs,
+    ) -> None:
+        """Create stage.
+
+        Parameters
+        ----------
+        name : str
+            The name of the stage
+        output : str | Path | list
+            The file(s) that are created by the stage
+        dependencies : str | list, default=None
+            The stage(s) on which this stage depends
+        cache : bool, default=False
+            Whether to cache the results of the stage
+        paths : SimpleNamespace or None, default=None
+            Namespace object that defines paths for saving,
+            loading objects.
+        wf_vars : SimpleNamespace or None, default=None
+            Namespace object for global workflow variables
+        **kwargs
+            Any other keywords to pass to the function.
+        """
+        # Save the parameters
+        self.name = name
+        self.output = output
+        self.dependencies = dependencies
+        self.cache = cache
+        self.wf_vars = SimpleNamespace() if wf_vars is None else wf_vars
+        self.stage_vars = SimpleNamespace(**kwargs)
+
+        # If no paths provided, just use root path
+        if paths is None:
+            git_repo = git.Repo(".", search_parent_directories=True)
+            self.paths = SimpleNamespace(root=Path(git_repo.working_tree_dir))
+        else:
+            self.paths = paths
+
+        # Start with empty resolution status
+        self.resolution = None
+
+    @property
+    def _output_list(self) -> list:
+        """Return the output in a list."""
+        # Get the output
+        output = self.output
+
+        # Convert to list
+        if isinstance(output, list):
+            pass
+        elif isinstance(output, tuple):
+            output = list(output)
+        else:
+            output = [output]
+
+        # Make sure every element is a Path
+        output = [Path(file) for file in output]
+
+        return output
+
+    def _prep_output_destination(self) -> None:
+        """Create the output parent directory if it does not exist."""
+        # Get output list
+        output = self._output_list
+
+        # Loop over files
+        for file in output:
+            if file.parent.exists():
+                continue
+            if self.verbose:
+                print(f"Creating parent directory for output '{file}'")
+            file.parent.mkdir(parents=True)
+
+    def _check_output_exists(self, output: str | Path | None = None) -> bool:
+        """Return whether the output exists locally.
+
+        Parameters
+        ----------
+        output: str or Path or None, default=None
+            The output to check existence for. If None, all outputs
+            are checked.
+
+        Returns
+        -------
+        bool
+            Whether the output exits locally
+        """
+        # Determine the output to query
+        if output is None:
+            output = self._output_list
+        else:
+            output = [output]
+
+        return all([file.exists() for file in output])
+
+    def _get_local_time(self, output: str | Path | None = None) -> float:
+        """Get the local timestamp for the output.
+
+        Parameters
+        ----------
+        output: str or Path or None, default=None
+            The output to get the local time for. If None, the
+            minimum local time for all outputs is return.
+
+        Returns
+        -------
+        float
+            The local time in seconds. This is a Unix timestamp.
+        """
+        if not self._check_output_exists():
+            return -99
+
+        # Determine the output to query
+        if output is None:
+            output = self._output_list
+        else:
+            output = [output]
+
+        return min([file.stat().st_mtime for file in output])
+
+    def _get_cache_time(
+        self,
+        workflow: "Workflow | None",
+        output: str | Path | None = None,
+    ) -> float:
+        """Get the cache timestamp for the output.
+
+        Parameters
+        ----------
+        workflow: Workflow or None
+            Workflow with a cache
+        output: str or Path or None, default=None
+            The output to get the cache time for. If None, the
+            minimum cache time for all outputs is return.
+
+        Returns
+        -------
+        float
+            The cache time in seconds. This is a Unix timestamp.
+        """
+        # If no workflow, don't even try
+        if workflow is None:
+            return -99
+
+        # Connect to workflow cache
+        workflow._connect_to_cache()
+
+        # If cache not connected, don't even try
+        if not workflow._cache_connected:
+            return -99
+
+        # Determine the output to query
+        if output is None:
+            output = self._output_list
+        else:
+            output = [output]
+
+        # Return time stamps for files
+        try:
+            times = []
+            for file in output:
+                info = github_release.get_asset_info(
+                    workflow.github_name,
+                    workflow.cache_tag,
+                    file.name,
+                )
+                times.append(datetime.fromisoformat(info["updated_at"]).timestamp())
+            return min(times)
+        except Exception:
+            return -99
+
+    def _check_output_cache_exists(
+        self,
+        workflow: "Workflow | None",
+        output: str | Path | None = None,
+    ) -> bool:
+        """Check whether the output exists in the cache.
+
+        Parameters
+        ----------
+        workflow: Workflow or None
+            Workflow with a cache
+        output: str or Path or None, default=None
+            The output to check existence for. If None, all outputs
+            are checked.
+
+        Returns
+        -------
+        bool
+            Whether the output exists in the cache
+        """
+        return self._get_cache_time(workflow, output) > -99
+
+    def _cache_output(self, workflow: "Workflow | None") -> None:
+        """Cache the output.
+
+        Parameters
+        ----------
+        workflow: Workflow or None
+            Workflow with a cache
+        """
+        # If no workflow, don't even try
+        if workflow is None:
+            return
+
+        # Connect to workflow cache
+        workflow._connect_to_cache()
+
+        # If cache not connected, don't even try
+        if not workflow._cache_connected:
+            return
+
+        # Get output list
+        output = self._output_list
+
+        # Get lists of cache assets
+        asset_names = [
+            asset["name"]
+            for asset in github_release.get_assets(
+                workflow.github_name, workflow.cache_tag
+            )
+        ]
+
+        # Loop over every file
+        for file in output:
+            # Get the timestamps
+            local_mt = self._get_local_time(file)
+            cache_mt = self._get_cache_time(workflow, file)
+
+            # Skip if cache up-to-date
+            if cache_mt >= local_mt:
+                continue
+
+            # Otherwise we need to cache the output in an asset
+            print(f"Caching '{file}'")
+
+            # If asset already in cache, we must delete it first
+            if file.name in asset_names:
+                with workflow._get_print_context():
+                    github_release.gh_asset_delete(
+                        workflow.github_name,
+                        workflow.cache_tag,
+                        file.name,
+                    )
+
+            # Now upload asset
+            with workflow._get_print_context():
+                github_release.gh_asset_upload(
+                    workflow.github_name,
+                    workflow.cache_tag,
+                    str(file),
+                )
+
+            # Set local timestamp to match cache
+            cache_time = self._get_cache_time(workflow, file)
+            os.utime(file, times=(cache_time, cache_time))
+
+    def _download_cached_output(self, workflow: "Workflow | None") -> None:
+        """Download the cached output.
+
+        Parameters
+        ----------
+        workflow : Workflow or None
+            Workflow with a cache
+        """
+        # If no workflow,raise error
+        if workflow is None:
+            raise RuntimeError("No workflow provided.")
+
+        # Connect to workflow cache
+        workflow._connect_to_cache()
+
+        # If cache not connected, don't even try
+        if not workflow._cache_connected:
+            raise RuntimeError("Cannot connect to cache.")
+
+        # Get output list
+        output = self._output_list
+
+        # Make sure the output parent directory exists
+        self._prep_output_destination()
+
+        # Loop over files
+        for file in output:
+            # Download the cached file
+            with contextlib.chdir(file.parent), workflow._get_print_context():
+                github_release.gh_asset_download(
+                    workflow.github_name,
+                    workflow.cache_tag,
+                    str(file.name),
+                )
+
+            # Set the last modified time of the downloaded file to match the cache
+            cache_time = self._get_cache_time(workflow, file)
+            os.utime(file, times=(cache_time, cache_time))
+
+    def _get_stage_time(self) -> float:
+        """Get the timestamp of the stage definition.
+
+        Returns
+        -------
+        float
+            Last time the file defining the stage changed.
+            This is a Unix timestamp.
+        """
+        file = Path(getfile(self.__class__))
+        return file.stat().st_mtime
+
+    def query(self, workflow: "Workflow | None" = None) -> dict:
+        """This is used to determine if the stage needs to be run.
+
+        Parameters
+        ----------
+        workflow: Workflow or None, default=None
+            A Workflow with a cache
+
+        Returns
+        -------
+            dict
+                Dictionary containing the following information:
+                - "local": Whether the stage outputs exist locally
+                - "cache": Whether the stage outputs exist in the cache
+                - "newest": Which item is newest (one of "local", "cache", "stage").
+                    If "stage" is newest, that means the file that defines the stage
+                    has been updated more recently than the corresponding outputs,
+                    so the rule needs to be re-run.
+        """
+        # Check existence
+        exist_local = self._check_output_exists()
+        exist_cache = self._check_output_cache_exists(workflow)
+
+        # Get all the time stamps
+        times = [
+            self._get_local_time(),
+            self._get_cache_time(workflow),
+            self._get_stage_time(),
+        ]
+        newest = ["local", "cache", "stage"][np.argmax(times)]
+
+        return {
+            "local": exist_local,
+            "cache": exist_cache,
+            "newest": newest,
+        }
+
+    @staticmethod
+    def split_seed(seed: int, N: int = 2, max_seed: int = int(1e12)) -> np.ndarray:
+        """Split the random seed.
+
+        Parameters
+        ----------
+        seed : int
+            The initial seed
+        N : int, default=2
+            The number of seeds to produce
+        max_seed : int, default=1e12
+            The maximum allowed value for seeds
+        """
+        rng = np.random.default_rng(seed)
+        return rng.integers(0, max_seed, size=N)
+
+    def _pre_run(self, workflow: "Workflow | None", dep_changed: bool) -> None:
+        """Execute pre-run steps.
+
+        Parameters
+        ----------
+        workflow: Workflow or None
+            A workflow with wf_vars and a cache
+        dep_changed: bool, default=False
+            Whether one of the stage dependencies changed. If True,
+            the stage will be re-run regardless of the status.
+        """
+        # Query the stage status to determine if we need to re-run
+        status = self.query(workflow)
+
+        # If local output exists and it is newest, don't do anything
+        if status["newest"] == "local" and not dep_changed:
+            print(f"Skipping '{self.name}' because local output is up to date")
+            self.resolution = "local"
+            if self.cache:
+                self._cache_output(workflow)
+
+        # If cached output exists and it is newest, download it
+        elif status["newest"] == "cache" and not dep_changed:
+            print(f"Downloading output for `{self.name}` from the cache")
+            try:
+                self._download_cached_output(workflow)
+                self.resolution = "cache"
+            except Exception:
+                print(
+                    f"Failed to download output for '{self.name}' from the cache. "
+                    "We will proceed without the cache and re-run the stage."
+                )
+
+        # If this is a DummyStage and we couldn't find the output, raise error
+        elif isinstance(self, DummyStage):
+            raise RuntimeError(
+                f"'{self.name}' is a DummyStage, but the output "
+                "was not found on the local path or in the cache."
+            )
+
+        # If the stage is not resolved, we will need to run it
+        if self.resolution is None:
+            # First print why we are running the stage
+            if not status["local"] and not status["cache"]:
+                print(f"Running '{self.name}' because the output does not exist")
+            elif status["newest"] == "cache":
+                print(f"Running '{self.name}' because cache download failed")
+            elif status["newest"] == "stage":
+                print(f"Running '{self.name}' because the stage changed")
+            elif dep_changed:
+                print(f"Running '{self.name}' because a dependency changed")
+            else:
+                raise RuntimeError("Edge case in run logic!")
+
+    @abstractmethod
+    def _run(self) -> None:
+        """Run the stage.
+
+        Subclass must define this stage. It must take no parameters
+        and return None.
+        """
+        ...
+
+    def _post_run(self) -> None:
+        """Execute post-run steps."""
+        for file in self._output_list:
+            if not self._check_output_exists(file):
+                raise RuntimeError(
+                    f"Stage '{self.name}' completed but output '{file}' is missing!"
+                )
+
+    def run(
+        self,
+        workflow: "Workflow | None" = None,
+        dep_changed: bool = False,
+    ) -> None:
+        """
+        Run the stage.
+
+        Parameters
+        ----------
+        workflow: Workflow or None
+            A workflow with wf_vars and a cache. If None, the pre- and
+            post-run methods are not run, and the main '_run' method
+            is guaranteed to run.
+        dep_changed: bool, default=False
+            Whether one of the stage dependencies changed. If True,
+            the stage will be re-run regardless of the status.
+        """
+        # Execute pre-run steps
+        if workflow is not None:
+            self._pre_run(workflow, dep_changed)
+
+        # Run the stage
+        if self.resolution is None or workflow is None:
+            # Make sure the output parent directories exist
+            self._prep_output_destination()
+
+            # Run the main algorithm
+            self._run()
+
+            # Indicate that this stage was run
+            self.resolution = "run"
+
+        # Execute post-run steps
+        if workflow is not None:
+            self._post_run()
+
+
+class DummyStage(Stage):
+    """Dummy stage that does nothing.
+
+    This can be used for syncing input files to/from the cache.
+    """
+
+    def _get_stage_time(self) -> float:
+        """Get the timestamp of the stage definition.
+
+        We need to redefine this so it is always older than the
+        local and cache values.
+
+        Returns
+        -------
+        float
+            -100
+        """
+        return -100
+
+    def _run(self) -> None:
+        """Don't do anything!"""
+        pass
 
 
 class Workflow:
@@ -34,12 +544,19 @@ class Workflow:
     token saved under $GITHUB_TOKEN
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
+        """Create workflow.
+
+        Parameters
+        ----------
+        **kwargs
+            Any keyword arguments to add to the workflow global variables.
+        """
         # Create an empty list of stages
         self.stages = []
 
         # Get git and github info
-        self.git_repo = git.Repo(".")
+        self.git_repo = git.Repo(".", search_parent_directories=True)
         gh_url = self.git_repo.remotes.origin.url
         self.github_name = gh_url.removeprefix("git@github.com:").removesuffix(".git")
 
@@ -47,6 +564,12 @@ class Workflow:
         self.cache_tag = None
         self._cache_tags = []
         self._cache_connected = None
+
+        # Create the root paths object
+        self.paths = SimpleNamespace(root=Path(self.git_repo.working_tree_dir))
+
+        # Save the workflow variables
+        self.wf_vars = SimpleNamespace(**kwargs)
 
         # Default to not verbose
         self.verbose = False
@@ -63,26 +586,6 @@ class Workflow:
             return contextlib.nullcontext()
         else:
             return contextlib.redirect_stdout(None)
-
-    def _prep_output_destination(self, output: str | Path | list) -> None:
-        """Create the output parent directory if it does not exist."""
-        # Recurse for lists of outputs
-        if isinstance(output, (tuple, list)):
-            for file in output:
-                self._prep_output_destination(file)
-            return
-
-        # Make sure the output is a Path object
-        output = Path(output)
-
-        # If the parent directory exists, we can move on
-        if output.parent.exists():
-            return
-
-        # Otherwise create the parent directory
-        if self.verbose:
-            print(f"Creating parent directory for output '{output}'")
-        output.parent.mkdir(parents=True)
 
     @staticmethod
     def _no_connection_warning() -> None:
@@ -147,165 +650,6 @@ class Workflow:
 
         # Add a blank line after cache info
         print()
-
-    def _get_cache_time(self, output: str | Path) -> float:
-        """Get the timestamp at which this object was cached.
-
-        Parameters
-        ----------
-        output : str or Path
-            The output file for which to search the cache and return
-            a cache time. If the file is not found, -99 is returned.
-
-        Returns
-        -------
-        float
-            The cache time in seconds. This is a Unix timestamp.
-        """
-        self._connect_to_cache()
-
-        # If we are not connected to the cache, don't even try
-        if not self._cache_connected:
-            return -99
-
-        # Otherwise check if this asset exists in the cache and return timestamp
-        try:
-            info = github_release.get_asset_info(
-                self.github_name,
-                self.cache_tag,
-                output.name,
-            )
-            return datetime.fromisoformat(info["updated_at"]).timestamp()
-        except Exception:
-            return -99
-
-    def _cache_output(self, output: str | Path | list) -> None:
-        """Cache the output.
-
-        Parameters
-        ----------
-        output : str or Path or list
-            File or list of files to cache
-        """
-        self._connect_to_cache()
-
-        # If we are not connected to the cache, don't even try
-        if not self._cache_connected:
-            return
-
-        # Recurse for lists of outputs
-        if isinstance(output, (tuple, list)):
-            for file in output:
-                self._cache_output(file)
-            return
-
-        # Make sure the output is a Path object
-        output = Path(output)
-
-        # Get timestamp when asset was uploaded
-        cache_mt = self._get_cache_time(output)
-
-        # Get timestamp of local file creation
-        local_mt = output.stat().st_mtime
-
-        # If the local file isn't newer, we can skip
-        if cache_mt >= local_mt:
-            return
-
-        # Otherwise we need to cache the output in an asset
-        try:
-            print(f"Caching '{output}'")
-
-            # Get lists of assets
-            asset_names = [
-                asset["name"]
-                for asset in github_release.get_assets(self.github_name, self.cache_tag)
-            ]
-
-            # If this asset is already in the cache, we must delete it first
-            if output.name in asset_names:
-                with self._get_print_context():
-                    github_release.gh_asset_delete(
-                        self.github_name,
-                        self.cache_tag,
-                        output.name,
-                    )
-
-            # Now upload the asset
-            with self._get_print_context():
-                github_release.gh_asset_upload(
-                    self.github_name,
-                    self.cache_tag,
-                    str(output),
-                )
-
-            # Set the last modified time of the downloaded file to match the cache
-            cache_time = self._get_cache_time(output)
-            os.utime(output, times=(cache_time, cache_time))
-        except Exception:
-            pass
-
-    def _download_cached_output(self, output: str | Path | list) -> None:
-        """Download the cached output.
-
-        Parameters
-        ----------
-        output : str or path or list
-            File or list of files to download from the cache.
-        """
-        self._connect_to_cache()
-
-        # If we are not connected to the cache, don't even try
-        if not self._cache_connected:
-            raise RuntimeError("Cannot connect to cache.")
-
-        # Recurse for lists of outputs
-        if isinstance(output, (tuple, list)):
-            for file in output:
-                self._download_cached_output(file)
-            return
-
-        # Make sure the output is a Path object
-        output = Path(output)
-
-        # Make sure the output parent directory exists
-        self._prep_output_destination(output)
-
-        # Download the cached output
-        with contextlib.chdir(output.parent), self._get_print_context():
-            github_release.gh_asset_download(
-                self.github_name,
-                self.cache_tag,
-                str(output.name),
-            )
-
-        # Set the last modified time of the downloaded file to match the cache
-        cache_time = self._get_cache_time(output)
-        os.utime(output, times=(cache_time, cache_time))
-
-    def _check_output_exists(self, stage_name: str, output: str | Path | list) -> None:
-        """Check that the outputs of the stage exist.
-
-        Parameters
-        ----------
-        stage_name : str
-            The name of the stage
-        output : str or path or list
-            File or list of files to check.
-        """
-        # Recurse for lists of outputs
-        if isinstance(output, (tuple, list)):
-            for file in output:
-                self._check_output_exists(stage_name, file)
-            return
-
-        # Make sure the output is a Path object
-        output = Path(output)
-
-        if not output.exists():
-            raise RuntimeError(
-                f"Stage '{stage_name}' completed but output '{output}' is missing!"
-            )
 
     def get_existing_cache_tags(self, _cli_print: bool = False) -> list:
         """Get list of existing cache tags.
@@ -434,10 +778,12 @@ class Workflow:
     def add_stage(
         self,
         name: str,
-        function: Callable | None,
+        stage: Stage | None,
         output: str | Path | list,
         dependencies: str | list = None,
         cache: bool = False,
+        paths: SimpleNamespace | None = None,
+        wf_vars: SimpleNamespace | None = None,
         **kwargs,
     ) -> None:
         """Add a stage to the workflow.
@@ -450,51 +796,70 @@ class Workflow:
         ----------
         name : str
             The name of the stage.
-        function : Callable or None
-            Function that defines the stage. This function must take the
-            `output` keyword. Can also be None, in which case the output
-            must be retrievable either from the local path or from the cache.
+        stage : Stage or None
+            Class that defines the stage. If None, DummyStage is used.
         output : str or Path or list
             The file(s) that are created by the stage.
         dependencies : str or list or None, default=None
             The stage(s) on which this stage depends.
         cache : bool, default=False
             Whether to cache the results of the stage.
+        paths : SimpleNamespace or None, default=None
+            Override the workflow paths. If None, the workflow
+            passes the current paths object.
+        wf_vars : SimpleNamespace or None, default=None
+            Override the global workflow variables. If None,
+            the workflow passes the current global variables.
         **kwargs
             Any other keywords to pass to the function.
         """
         # Check the name is unique:
-        for stage in self.stages:
-            if stage["name"] == name:
-                raise ValueError(f"There is more than one stage with the name {name}.")
+        for prev_stage in self.stages:
+            if name == prev_stage.name:
+                raise ValueError(
+                    f"There is more than one stage with the name '{name}'."
+                )
 
         # Check that any dependencies are already in the stage list
         if dependencies is None:
             pass
         elif isinstance(dependencies, (tuple, list)):
             for dep in dependencies:
-                if not any(dep == stage["name"] for stage in self.stages):
+                if not any(dep == stage.name for stage in self.stages):
                     raise ValueError(
                         f"Dependency '{dep}' for '{name}' not found. "
-                        "Remember that the order in which you add stages does matter!"
+                        "Remember the order in which you add stages does matter!"
                     )
         else:
-            if not any(dependencies == stage["name"] for stage in self.stages):
+            if not any(dependencies == stage.name for stage in self.stages):
                 raise ValueError(
                     f"Dependency '{dependencies}' for '{name}' not found. "
-                    "Remember that the order in which you add stages does matter!"
+                    "Remember the order in which you add stages does matter!"
                 )
+
+        # If stage is None, use DummyStage
+        if stage is None:
+            stage = DummyStage
+        elif not issubclass(stage, Stage):
+            raise TypeError(f"Stage for '{name}' is not a stage!")
+
+        # Determine the paths and workflow variables to pass
+        if paths is None:
+            paths = self.paths
+        if wf_vars is None:
+            wf_vars = SimpleNamespace(**self.wf_vars.__dict__.copy())
 
         # Add the stage to the list
         self.stages.append(
-            {
-                "name": name,
-                "function": function,
-                "output": output,
-                "dependencies": dependencies,
-                "cache": cache,
-                "kwargs": kwargs,
-            }
+            stage(
+                name=name,
+                output=output,
+                dependencies=dependencies,
+                cache=cache,
+                paths=paths,
+                wf_vars=wf_vars,
+                **kwargs,
+            )
         )
 
     def query_stages(self, *, _cli_print: bool = False) -> dict:
@@ -513,70 +878,8 @@ class Workflow:
                 stage has been updated more recently than the corresponding outputs,
                 so the rule needs to be re-run.
         """
-        # Create nested dictionary for every stage
-        status = {stage["name"]: {} for stage in self.stages}
-
-        # Loop over stages and save status indicators
-        for stage in self.stages:
-            name = stage["name"]
-
-            # Check for file on local and in the cache
-            if isinstance(stage["output"], (tuple, list)):
-                status[name]["local"] = all(
-                    [Path(file).exists() for file in stage["output"]]
-                )
-
-                status[name]["cache"] = all(
-                    [self._get_cache_time(file) > -99 for file in stage["output"]]
-                )
-            else:
-                status[name]["local"] = Path(stage["output"]).exists()
-                status[name]["cache"] = self._get_cache_time(stage["output"]) > -99
-
-            # Determine which item is newest
-            if stage["function"] is None:
-                stage_mt = -99
-            else:
-                stage_mt = Path(inspect.getfile(stage["function"])).stat().st_mtime
-            if isinstance(stage["output"], (tuple, list)):
-                # Get the local times
-                local_mt = []
-                for file in stage["output"]:
-                    path = Path(file)
-                    local_mt.append(-99 if not path.exists() else path.stat().st_mtime)
-                local_mt = max(local_mt)
-
-                # Get the cache times
-                cache_mt = [self._get_cache_time(file) for file in stage["output"]]
-                cache_mt = max(cache_mt)
-            else:
-                # Get the local time
-                path = Path(stage["output"])
-                local_mt = -99 if not path.exists() else path.stat().st_mtime
-
-                # Get the cache time
-                cache_mt = self._get_cache_time(stage["output"])
-
-            # Handle cases where the local and cache do/don't exist
-            if not status[name]["local"] and not status[name]["cache"]:
-                status[name]["newest"] = "stage"
-            elif status[name]["local"] and not status[name]["cache"]:
-                if local_mt >= stage_mt:
-                    status[name]["newest"] = "local"
-                else:
-                    status[name]["newest"] = "stage"
-            elif not status[name]["local"] and status[name]["cache"]:
-                if cache_mt >= stage_mt:
-                    status[name]["newest"] = "cache"
-                else:
-                    status[name]["newest"] = "stage"
-            else:
-                if stage_mt > cache_mt and stage_mt > local_mt:
-                    status[name]["newest"] = "stage"
-                elif cache_mt > local_mt:
-                    status[name]["newest"] = "cache"
-                else:
-                    status[name]["newest"] = "local"
+        # Get the status of the workflow
+        status = {stage.name: stage.query() for stage in self.stages}
 
         # Print status
         if self.verbose or _cli_print:
@@ -589,80 +892,27 @@ class Workflow:
 
     def run(self) -> None:
         """Run the workflow."""
-        # Query stage status
-        status = self.query_stages()
-
         # Keep track of all re-run stages
         rerun_stages = []
 
-        # Loop over stages
         for stage in self.stages:
-            # Get the name of the stage
-            name = stage["name"]
-
             # Check if dependencies have been re-run
-            if stage["dependencies"] is None:
-                dep_rerun = False
-            elif isinstance(stage["dependencies"], (tuple, list)):
-                dep_rerun = any([dep in rerun_stages for dep in stage["dependencies"]])
+            if stage.dependencies is None:
+                dep_changed = False
+            elif isinstance(stage.dependencies, (tuple, list)):
+                dep_changed = any([dep in rerun_stages for dep in stage.dependencies])
             else:
-                dep_rerun = stage["dependencies"] in rerun_stages
-
-            # If the cache is the newest version of output, download that version
-            if status[name]["newest"] == "cache" and not dep_rerun:
-                print(f"Downloading output for `{name}` from the cache")
-                try:
-                    self._download_cached_output(stage["output"])
-                    continue
-                except Exception:
-                    print(
-                        f"Failed to download output for '{name}' from the cache. "
-                        "We will proceed without the cache and re-run the stage."
-                    )
-                    status[name]["cache"] = False
-                    status[name]["newest"] = "stage"
-
-            # If the local output is the newest version, skip this stage
-            elif status[name]["newest"] == "local" and not dep_rerun:
-                print(f"Skipping '{name}' because local output is up to date")
-                if stage["cache"]:
-                    self._cache_output(stage["output"])
-                continue
-
-            # If the function was None, and we couldn't find the output
-            # either on the local or remote, then we have an error!
-            elif stage["function"] is None:
-                raise RuntimeError(
-                    f"Stage '{name}' has a dummy function, but the output "
-                    "was not found on the local path or in the cache."
-                )
-
-            # If we get this far, we need to run the stage
-            # First we will print why the stage is being run
-            if not status[name]["local"] and not status[name]["cache"]:
-                print(f"Running '{name}' because the output does not exist")
-            elif status[name]["newest"] == "stage":
-                print(f"Running '{name}' because the stage changed")
-            elif dep_rerun:
-                print(f"Running '{name}' because a dependency changed")
-            else:
-                raise RuntimeError("Edge case in run logic!")
-
-            # Make sure the output parent directory exists
-            self._prep_output_destination(stage["output"])
+                dep_changed = stage.dependencies in rerun_stages
 
             # Run the stage
-            stage["function"](output=stage["output"], **stage["kwargs"])
+            stage.run(
+                workflow=self,
+                dep_changed=dep_changed,
+            )
 
-            # Check that the outputs now exist
-            self._check_output_exists(name, stage["output"])
-
-            # Cache the results
-            if stage["cache"]:
-                self._cache_output(stage["output"])
-
-            # Save this stage in the list of run stages
-            rerun_stages.append(name)
+            # If this stage was run, save it in the re-run list
+            if stage.resolution == "run":
+                rerun_stages.append(stage.name)
 
         print("\nWorkflow completed!")
 

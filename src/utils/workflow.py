@@ -12,10 +12,11 @@ import github_release
 import humanize
 import typer
 from rich import print
-import numpy as np
 from abc import ABC, abstractmethod
 from types import SimpleNamespace
 from inspect import getfile
+import json
+import hashlib
 
 
 class Stage(ABC):
@@ -68,6 +69,12 @@ class Stage(ABC):
             self.paths = SimpleNamespace(root=Path(git_repo.working_tree_dir))
         else:
             self.paths = paths
+
+        # Set the path to the stage history
+        self._stage_history_file = self.paths.root / ".stage_history.json"
+
+        # Save the file for the stage
+        self._stage_file = Path(getfile(self.__class__))
 
         # Start with empty resolution status
         self.resolution = None
@@ -327,17 +334,59 @@ class Stage(ABC):
             cache_time = self._get_cache_time(workflow, file)
             os.utime(file, times=(cache_time, cache_time))
 
-    def _get_stage_time(self) -> float:
-        """Get the timestamp of the stage definition.
+    @property
+    def _stage_hash(self) -> str:
+        """The stage hash.
 
         Returns
         -------
-        float
-            Last time the file defining the stage changed.
-            This is a Unix timestamp.
+        str
+            Hash as a hexadecimal equivalent encoded string
         """
-        file = Path(getfile(self.__class__))
-        return file.stat().st_mtime
+        with open(self._stage_file, "rb") as file:
+            stage_hash = hashlib.md5(file.read()).hexdigest()
+
+        return stage_hash
+
+    def _update_stage_hash(self) -> None:
+        """Update the stage hash."""
+        # Load stage history if it exists
+        if self._stage_history_file.exists():
+            stage_history = json.load(open(self._stage_history_file))
+        else:
+            stage_history = {}
+
+        # Add new hash to the history
+        stage_history[self.name] = self._stage_hash
+
+        # Save stage history
+        json.dump(stage_history, open(self._stage_history_file, "w"), indent=2)
+
+    def _has_stage_changed(self) -> bool:
+        """Whether the stage definition has changed.
+
+        Returns
+        -------
+        bool
+            Whether the stage has changed.
+        """
+        # If stage history does not exist, the stage has changed
+        if not self._stage_history_file.exists():
+            return True
+
+        # Load the stage history
+        stage_history = json.load(open(self._stage_history_file))
+
+        # If the stage is not in the stage history, the stage has changed
+        if self.name not in stage_history:
+            return True
+
+        # If saved hash does not match current hash, the stage has changed
+        if self._stage_hash != stage_history[self.name]:
+            return True
+
+        # If all above are False, the stage is the same
+        return False
 
     def query(self, workflow: "Workflow | None" = None) -> dict:
         """This is used to determine if the stage needs to be run.
@@ -362,35 +411,26 @@ class Stage(ABC):
         exist_local = self._check_output_exists()
         exist_cache = self._check_output_cache_exists(workflow)
 
-        # Get all the time stamps
-        times = [
-            self._get_local_time(),
-            self._get_cache_time(workflow),
-            self._get_stage_time(),
-        ]
-        newest = ["local", "cache", "stage"][np.argmax(times)]
+        # Check if the stage changed
+        stage_changed = self._has_stage_changed()
+
+        # Determine which item is the newest
+        if stage_changed or not (exist_local or exist_cache):
+            newest = "stage"
+        else:
+            # Get time stamps
+            local_time = self._get_local_time()
+            cache_time = self._get_cache_time(workflow)
+            if local_time >= cache_time:
+                newest = "local"
+            else:
+                newest = "cache"
 
         return {
             "local": exist_local,
             "cache": exist_cache,
             "newest": newest,
         }
-
-    @staticmethod
-    def split_seed(seed: int, N: int = 2, max_seed: int = int(1e12)) -> np.ndarray:
-        """Split the random seed.
-
-        Parameters
-        ----------
-        seed : int
-            The initial seed
-        N : int, default=2
-            The number of seeds to produce
-        max_seed : int, default=1e12
-            The maximum allowed value for seeds
-        """
-        rng = np.random.default_rng(seed)
-        return rng.integers(0, max_seed, size=N)
 
     def _pre_run(self, workflow: "Workflow | None", dep_changed: bool) -> None:
         """Execute pre-run steps.
@@ -457,6 +497,7 @@ class Stage(ABC):
 
     def _post_run(self) -> None:
         """Execute post-run steps."""
+        # Check outputs exist
         for file in self._output_list:
             if not self._check_output_exists(file):
                 raise RuntimeError(
@@ -496,6 +537,9 @@ class Stage(ABC):
             # Indicate that this stage was run
             self.resolution = "run"
 
+            # Update the stage hash
+            self._update_stage_hash()
+
         # Execute post-run steps
         if workflow is not None:
             self._post_run()
@@ -507,22 +551,23 @@ class DummyStage(Stage):
     This can be used for syncing input files to/from the cache.
     """
 
-    def _get_stage_time(self) -> float:
-        """Get the timestamp of the stage definition.
-
-        We need to redefine this so it is always older than the
-        local and cache values.
+    def _has_stage_changed(self) -> bool:
+        """Always return False.
 
         Returns
         -------
-        float
-            -100
+        bool
+            Always returns False
         """
-        return -100
+        return False
+
+    def _update_stage_hash(self) -> None:
+        """Don't update any hashes for the dummy stage."""
+        pass
 
     def _run(self) -> None:
-        """Don't do anything!"""
-        pass
+        """This stage cannot be run."""
+        raise RuntimeError(f"Stage '{self.name}' is a DummyStage and cannot be run!")
 
 
 class Workflow:

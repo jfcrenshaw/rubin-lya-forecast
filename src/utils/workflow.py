@@ -1,10 +1,15 @@
 """Define the workflow class"""
 
 import contextlib
+import hashlib
+import json
 import os
 import warnings
+from abc import ABC, abstractmethod
 from datetime import datetime
+from inspect import getfile
 from pathlib import Path
+from types import SimpleNamespace
 from typing import ContextManager
 
 import git
@@ -12,11 +17,6 @@ import github_release
 import humanize
 import typer
 from rich import print
-from abc import ABC, abstractmethod
-from types import SimpleNamespace
-from inspect import getfile
-import json
-import hashlib
 
 
 class Stage(ABC):

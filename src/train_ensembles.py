@@ -4,10 +4,10 @@ import pickle
 
 import jax.numpy as jnp
 import optax
-from pzflow import FlowEnsemble, Flow
+from pzflow import Flow, FlowEnsemble
 from pzflow.bijectors import Chain, RollingSplineCoupling, ShiftBounds
 
-from src.utils import Stage, split_seed, observe_catalog
+from src.utils import Stage, observe_catalog, split_seed
 
 
 class TrainEnsembles(Stage):

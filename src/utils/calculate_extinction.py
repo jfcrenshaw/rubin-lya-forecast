@@ -1,11 +1,12 @@
 """Module to calculate the expected Lyman-alpha magnitude increment."""
 
+import re
+from pathlib import Path
+
+import git
 import numpy as np
 
 from .constants import LYMAN_WAVELEN
-from pathlib import Path
-import re
-import git
 
 
 class Bandpass:

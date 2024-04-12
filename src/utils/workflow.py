@@ -33,6 +33,7 @@ class Stage(ABC):
         cache: bool = False,
         paths: SimpleNamespace | None = None,
         wf_vars: SimpleNamespace | None = None,
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """Create stage.
@@ -52,6 +53,8 @@ class Stage(ABC):
             loading objects.
         wf_vars : SimpleNamespace or None, default=None
             Namespace object for global workflow variables
+        verbose : bool, default=False
+            Whether to print extra information to the terminal.
         **kwargs
             Any other keywords to pass to the function.
         """
@@ -62,6 +65,7 @@ class Stage(ABC):
         self.cache = cache
         self.wf_vars = SimpleNamespace() if wf_vars is None else wf_vars
         self.stage_vars = SimpleNamespace(**kwargs)
+        self.verbose = verbose
 
         # If no paths provided, just use root path
         if paths is None:
@@ -443,6 +447,9 @@ class Stage(ABC):
             Whether one of the stage dependencies changed. If True,
             the stage will be re-run regardless of the status.
         """
+        # Set the stage verbosity to the workflow verbosity
+        self.verbose = workflow.verbose
+
         # Query the stage status to determine if we need to re-run
         status = self.query(workflow)
 

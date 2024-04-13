@@ -366,6 +366,20 @@ class Stage(ABC):
         # Save stage history
         json.dump(stage_history, open(self._stage_history_file, "w"), indent=2)
 
+    def _delete_stage_hash(self) -> None:
+        """Delete the stage hash."""
+        # Load stage history if it exists
+        if self._stage_history_file.exists():
+            stage_history = json.load(open(self._stage_history_file))
+        else:
+            return
+
+        # Remove this stage from the history
+        stage_history.pop(self.name, None)
+
+        # Save stage history
+        json.dump(stage_history, open(self._stage_history_file, "w"), indent=2)
+
     def _has_stage_changed(self) -> bool:
         """Whether the stage definition has changed.
 
@@ -457,20 +471,12 @@ class Stage(ABC):
         if status["newest"] == "local" and not dep_changed:
             print(f"Skipping '{self.name}' because local output is up to date")
             self.resolution = "local"
-            if self.cache:
-                self._cache_output(workflow)
 
         # If cached output exists and it is newest, download it
         elif status["newest"] == "cache" and not dep_changed:
             print(f"Downloading output for `{self.name}` from the cache")
-            try:
-                self._download_cached_output(workflow)
-                self.resolution = "cache"
-            except Exception:
-                print(
-                    f"Failed to download output for '{self.name}' from the cache. "
-                    "We will proceed without the cache and re-run the stage."
-                )
+            self._download_cached_output(workflow)
+            self.resolution = "cache"
 
         # If this is a DummyStage and we couldn't find the output, raise error
         elif isinstance(self, DummyStage):
@@ -502,14 +508,24 @@ class Stage(ABC):
         """
         ...
 
-    def _post_run(self) -> None:
-        """Execute post-run steps."""
+    def _post_run(self, workflow: "Workflow | None") -> None:
+        """Execute post-run steps.
+
+        Parameters
+        ----------
+        workflow: Workflow or None
+            A workflow with wf_vars and a cache
+        """
         # Check outputs exist
         for file in self._output_list:
             if not self._check_output_exists(file):
                 raise RuntimeError(
                     f"Stage '{self.name}' completed but output '{file}' is missing!"
                 )
+
+        # Cache output
+        if self.cache and self.resolution != "cache":
+            self._cache_output(workflow)
 
     def run(
         self,
@@ -549,7 +565,7 @@ class Stage(ABC):
 
         # Execute post-run steps
         if workflow is not None:
-            self._post_run()
+            self._post_run(workflow)
 
 
 class DummyStage(Stage):
@@ -570,6 +586,10 @@ class DummyStage(Stage):
 
     def _update_stage_hash(self) -> None:
         """Don't update any hashes for the dummy stage."""
+        pass
+
+    def _delete_stage_hash(self) -> None:
+        """Don't delete any hashes for the dummy stage."""
         pass
 
     def _run(self) -> None:
@@ -941,6 +961,50 @@ class Workflow:
             print()
 
         return status
+
+    def update_stage_hash(self, stage_name: str) -> None:
+        """Update the hash for the given stage.
+
+        Parameters
+        ----------
+        stage_name: str
+            The name of the stage for which to update the hash.
+        """
+        # Find the stage
+        stage = None
+        for st in self.stages:
+            if st.name == stage_name:
+                stage = st
+                break
+
+        # Raise error if no matching stage found
+        if stage is None:
+            raise ValueError(f"No stage found with name'{stage_name}'")
+
+        # Update the stage hash
+        stage._update_stage_hash()
+
+    def delete_stage_hash(self, stage_name: str) -> None:
+        """Delete the hash for the given stage.
+
+        Parameters
+        ----------
+        stage_name: str
+            The name of the stage for which to delete the hash.
+        """
+        # Find the stage
+        stage = None
+        for st in self.stages:
+            if st.name == stage_name:
+                stage = st
+                break
+
+        # Raise error if no matching stage found
+        if stage is None:
+            raise ValueError(f"No stage found with name'{stage_name}'")
+
+        # Update the stage hash
+        stage._delete_stage_hash()
 
     def run(self) -> None:
         """Run the workflow."""

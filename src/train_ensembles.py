@@ -1,4 +1,4 @@
-"""Train the ensembles for photo-z and u0 estimation."""
+"""Train the ensembles for photo-z and u0 estimation. """
 
 import pickle
 
@@ -31,15 +31,14 @@ class TrainEnsembles(Stage):
         train_seeds = split_seed(seed2, len(learning_rates))
 
         # Emulate a truth training catalog
-        print("sampling emulator")
         emulator = Flow(file=self.paths.models / "incat_emulator.pkl")
         truth = emulator.sample(100_000, seed=seed)
-        print("done with that")
 
         for i, (ens_file, loss_file) in enumerate(zip(ensemble_files, loss_files)):
-            # Get the training catalog
+            # Get the training catalog and the column names
             if "truth" in ens_file.name:
-                train = truth
+                train = truth.rename(columns={"u": "u0"})
+                conditional_columns = train.columns
             else:
                 year = int(ens_file.name.split("_")[0][1:])
                 euclid = "euclid" in ens_file.name
@@ -52,16 +51,12 @@ class TrainEnsembles(Stage):
                     roman=roman,
                     seed=cat_seeds[i],
                 )
+                conditional_columns = train.columns.drop(
+                    [col for col in train.columns if "_err" in col or col == "u"]
+                )
 
-            # Make sure we only have 100_000 galaxies
-            train = train.iloc[:100_000]
-
-            # Get column names for PZFlow
             data_columns = ["redshift", "u0"]
-            conditional_columns = train.columns.drop(data_columns + ["u", "u_err"])
-            conditional_columns = conditional_columns.drop(
-                [col for col in conditional_columns if "_err" in col]
-            )
+            conditional_columns = conditional_columns.drop(data_columns)
 
             # Determine range for the data columns
             mins = jnp.array([0, train.u0.min() - 0.5])

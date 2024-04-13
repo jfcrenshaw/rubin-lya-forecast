@@ -56,13 +56,13 @@ workflow.add_stage(
     TrainEnsembles,
     [
         paths.models / f"{cat}_{end}"
-        for cat in ["truth", "y1", "y5", "y10", "y10_roman", "y10_euclid"]
+        for cat in ["y1", "y5", "y10", "y10_roman", "y10_euclid"]
         for end in ["ensemble.pkl", "ensemble_losses.pkl"]
     ],
     dependencies="emulate input catalog",
     cache=True,
     n_flows=4,
-    learning_rates=[1e-5, 2e-6, 1e-6],
+    learning_rates=[5e-6, 1e-6, 5e-7],
     epochs=[400, 50, 50],
     seed=2,
 )

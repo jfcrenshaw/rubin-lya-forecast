@@ -6,6 +6,7 @@ import jax.numpy as jnp
 import optax
 from pzflow import Flow, FlowEnsemble
 from pzflow.bijectors import Chain, RollingSplineCoupling, ShiftBounds
+from pzflow.distributions import CentBeta13
 
 from src.utils import Stage, observe_catalog, split_seed
 
@@ -73,10 +74,12 @@ class TrainEnsembles(Stage):
                 data_columns=data_columns,
                 conditional_columns=conditional_columns,
                 bijector=bijector,
+                latent=CentBeta13(len(data_columns)),
                 N=n_flows,
             )
 
             # Train the ensembles
+            print(f"Training {ens_file.name}")
             losses = [
                 ensemble.train(
                     train,

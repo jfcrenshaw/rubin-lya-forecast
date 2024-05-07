@@ -1,5 +1,9 @@
 {
   "plot increments": "7ee82e955f1f71486c7937a04eb9deee",
-  "train ensembles": "874e073f4352141bed4c8ffde54791e1",
-  "emulate input catalog": "ba3b51f625a55548d5ce37779e805328"
+  "train ensembles": "7094b7c044af3194ee4c8111402069f9",
+  "emulate input catalog": "ba3b51f625a55548d5ce37779e805328",
+  "train truth ensemble": "963dc0d3631ce3b9aef979be858cbaf1",
+  "train y10 ensemble": "963dc0d3631ce3b9aef979be858cbaf1",
+  "plot photo-z cut": "f952fb60277c35a101b6147c5824a5b2",
+  "create inference catalogs": "7d128229ec7b0b4425eb11852afff4cf"
 }

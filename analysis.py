@@ -21,6 +21,16 @@ paths.catalogs = paths.data / "catalogs"
 paths.models = paths.root / "models"
 paths.figures = paths.root / "figures"
 
+# Define the models I will train
+models = [
+    "y1",  # LSST year 1
+    "y5",
+    "y10",
+    # "y10_euclid",  # LSST year 10 + Euclid photometry
+    # "y10_roman",  # LSST year 10 + Roman photometry
+    "truth",  # True photometry for LSST + euclid + roman
+]
+
 # Add stages to workflow
 workflow.add_stage(
     "download data",
@@ -55,19 +65,39 @@ workflow.add_stage(
     "train ensembles",
     TrainEnsembles,
     [
-        paths.models / f"{cat}_{end}"
-        for cat in ["truth", "y1", "y5", "y10", "y10_roman", "y10_euclid"]
+        paths.models / f"{model}_{end}"
+        for model in models
         for end in ["ensemble.pkl", "ensemble_losses.pkl"]
     ],
     dependencies="emulate input catalog",
     cache=True,
     n_flows=4,
-    learning_rates=[5e-6, 1e-6, 5e-7],
+    learning_rates=[5e-6, 2e-6, 1e-6],
     epochs=[400, 50, 50],
     seed=2,
 )
 
+workflow.add_stage(
+    "create inference catalogs",
+    CreateInferenceCatalogs,
+    [paths.catalogs / f"{model}_inference_catalog.parquet" for model in models],
+    dependencies=["emulate input catalog", "train ensembles"],
+    cache=True,
+    n_galaxies=1_000_000,
+    n_samples_per_galaxy=100,
+    batch_size=100_000,
+    seed=3,
+)
 
+workflow.add_stage(
+    "plot photo-z cut",
+    PlotPhotoZCut,
+    paths.figures / "photoz_cut.pdf",
+    dependencies=["create inference catalogs"],
+    zmin=2.36,
+    zmax=4,
+)
+
+# Command-line interface
 if __name__ == "__main__":
-    # Run the command-line interface
     workflow.cli()

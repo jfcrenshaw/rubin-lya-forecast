@@ -43,7 +43,7 @@ def observe_catalog(
         raise ValueError("euclid and roman cannot both be True.")
 
     # Split the seed
-    seed_lsst, seed_euclid, seed_roman, seed_replace = split_seed(seed, 4)
+    seed_lsst, seed_euclid, seed_roman = split_seed(seed, 3)
 
     # Create the observed catalog
     cat_obs = cat_truth.copy()
@@ -77,5 +77,8 @@ def observe_catalog(
         cat_obs = roman_error_model(cat_obs, random_state=seed_roman)
     else:
         cat_obs = cat_obs.drop(list("YJHF"), axis=1)
+
+    # Drop any galaxies that aren't observed in all the bands
+    cat_obs = cat_obs[np.isfinite(cat_obs).all(axis=1)]
 
     return cat_obs
